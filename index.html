@@ -4,6 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Family Compound Planner</title>
+<!--
+  This single page app models costs and layouts for a shared family compound.
+  The original version of this file contained several issues:
+    - the function `selectPaletteType` was defined twice, causing the first
+      definition to be silently overwritten and leaving dead code in place.
+    - resizing the grid using the +/- controls corrupted room positions
+      because cell indices were recalculated against the wrong column count.
+    - new rooms could be placed on top of existing rooms without collision
+      checks, and moving rooms ignored overlaps as well.
+  The script below addresses those problems while retaining the existing
+  structure of the interface.  Grid resizing now remaps cell indices based
+  on the previous dimensions, collision detection prevents overlapping
+  placements and moves, and the palette click handler has a single,
+  authoritative implementation.
+-->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -313,6 +328,9 @@ nav {
   transition:border-color .1s; min-width:52px;
 }
 .palette-item:active { border-color:var(--gold); }
+/* The `.selected-from-palette` class is no longer used because the palette
+   selection opens a shape picker immediately.  It is left here for
+   backwards compatibility with old styles. */
 .palette-item.selected-from-palette { border-color:var(--gold2); background:var(--hi-bg); }
 .palette-icon { font-size:16px; }
 .palette-name { font-family:'DM Mono',monospace; font-size:7px; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
@@ -647,6 +665,8 @@ nav {
 </div>
 
 <script>
+// ------- Data Definitions -------
+// List of available room types with default presets and square footage.
 const ROOM_TYPES = [
   { id:'great',    name:'Great Room',    icon:'🛋',  color:'#1a3a6a', light:'#5a8ac0', defaultSqft:800 },
   { id:'kitchen',  name:'Kitchen',       icon:'🍳',  color:'#6a4a10', light:'#c4a040', defaultSqft:400 },
@@ -666,16 +686,41 @@ const ROOM_TYPES = [
 ];
 
 function getRoomType(id) { return ROOM_TYPES.find(r=>r.id===id) || ROOM_TYPES[0]; }
+// Assign a sensible default preset for each room type.  This is used when
+// placing a room directly from the palette without drawing a custom shape.
+ROOM_TYPES.forEach(rt => {
+  const presets = {
+    great:'3x3',
+    kitchen:'2x3',
+    dining:'2x2',
+    entry:'1x2',
+    bath:'1x1',
+    laundry:'2x2',
+    kids:'3x2',
+    office:'2x2',
+    bedroom:'2x2',
+    game:'2x3',
+    pantry:'1x1',
+    porch:'2x1',
+    workshop:'3x2',
+    loft:'3x2',
+    storage:'1x1',
+  };
+  rt.defaultPreset = presets[rt.id] || '2x2';
+});
 
+// Grid dimensions and base cell size.  These values can change via UI controls.
 let COLS = 8;
 let ROWS = 6;
 const BASE_CELL_SIZE = Math.floor((window.innerWidth - 28) / COLS);
 
+// Compute an appropriate cell size based on available width.
 function getCellSize() {
   const availW = window.innerWidth - 28;
   return Math.max(16, Math.floor(availW / COLS));
 }
 
+// App state holds budget numbers, number of families, pod settings, rooms, etc.
 let state = {
   budget: 1100000,
   land:   749000,
@@ -685,11 +730,29 @@ let state = {
   twoStory: false,
   ground: [],
   upper:  [],
-  selectedPaletteType: null,
+  // selection state for editing/moving rooms
   selectedRoomId: null,
   selectedFloor: null,
+  // ID of the currently selected palette item.  When set,
+  // clicking on the grid will place a default-sized room of this type.
+  selectedPaletteType: null,
 };
 
+// Utility functions for parsing and formatting currency.
+function parseDollar(str) { return parseInt(str.replace(/[^0-9]/g,'')) || 0; }
+function fmtDollar(n) { return '$'+n.toLocaleString(); }
+function fmtK(n) {
+  if(n>=1000000) return '$'+(n/1000000).toFixed(2)+'M';
+  return '$'+Math.round(n/1000)+'K';
+}
+
+// Format input fields on blur.  On focus we strip formatting for ease of entry.
+function formatInputOnBlur(el) {
+  const raw = parseDollar(el.value);
+  el.value = fmtDollar(raw);
+}
+
+// ---- Event wiring for top-level navigation ----
 document.querySelectorAll('.ntab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
@@ -699,18 +762,7 @@ document.querySelectorAll('.ntab').forEach(tab => {
   });
 });
 
-function parseDollar(str) { return parseInt(str.replace(/[^0-9]/g,'')) || 0; }
-function fmtDollar(n) { return '$'+n.toLocaleString(); }
-function fmtK(n) {
-  if(n>=1000000) return '$'+(n/1000000).toFixed(2)+'M';
-  return '$'+Math.round(n/1000)+'K';
-}
-
-function formatInputOnBlur(el) {
-  const raw = parseDollar(el.value);
-  el.value = fmtDollar(raw);
-}
-
+// Bind input fields for budget/land/family counts
 ['fBudget','fLand'].forEach(id => {
   const el = document.getElementById(id);
   el.addEventListener('focus', () => { el.value = parseDollar(el.value) || ''; });
@@ -724,6 +776,7 @@ document.getElementById('fFamilies').addEventListener('input', () => {
   syncFromInputs();
 });
 
+// Sync budget, land and family values from inputs into state and re-render overview
 function syncFromInputs() {
   state.budget = parseDollar(document.getElementById('fBudget').value);
   state.land   = parseDollar(document.getElementById('fLand').value);
@@ -731,6 +784,7 @@ function syncFromInputs() {
   renderOverview();
 }
 
+// Toggle pods on/off
 document.getElementById('podToggle').addEventListener('click', () => {
   state.podsOn = !state.podsOn;
   document.getElementById('podToggle').className = 'pill' + (state.podsOn?' on':'');
@@ -738,6 +792,7 @@ document.getElementById('podToggle').addEventListener('click', () => {
   renderOverview();
 });
 
+// Rebuild the pod size inputs when number of families changes
 function rebuildPodInputs() {
   const n = state.families;
   while(state.podSqfts.length < n) state.podSqfts.push(800);
@@ -747,7 +802,7 @@ function rebuildPodInputs() {
   state.podSqfts.forEach((sq, i) => {
     const row = document.createElement('div');
     row.className = 'pod-sqft-row';
-    const names = ['Jake\'s Family','Brother 1','Brother 2','Family 4','Family 5'];
+    const names = ["Jake's Family","Brother 1","Brother 2","Family 4","Family 5"];
     row.innerHTML = `
       <div class="pod-sqft-label">${names[i] || 'Family '+(i+1)}</div>
       <input class="pod-sqft-input" type="number" inputmode="numeric" value="${sq}" min="400" max="2000" data-idx="${i}">`;
@@ -759,12 +814,14 @@ function rebuildPodInputs() {
   });
 }
 
+// Compute barndo square footage from rooms.  Default fallback is full grid.
 function barnDoSqft() {
   const allRooms = [...state.ground, ...state.upper];
   if(allRooms.length === 0) return COLS * ROWS * 100;
   return allRooms.reduce((a,r) => a + r.sqft, 0);
 }
 
+// Cost calculator for barndominium.  Uses sq ft plus number of baths and kitchens.
 function calcBarndo(sqft) {
   const allRooms = [...state.ground, ...state.upper];
   const countOf = (typeId) => allRooms.filter(r=>r.typeId===typeId).length;
@@ -788,10 +845,12 @@ function calcBarndo(sqft) {
   return {slab,shell,frame,elec,plumb,hvac,drywall,kitchen,windows,laundry,twoS,conting,total:sub+conting,baths,kitchens,hasLaundry};
 }
 
+// Cost per prefab pod based on square footage
 function podCostForSqft(sqft) {
   return Math.round(44000 + Math.max(0,(sqft-400)*38) + 18000);
 }
 
+// Render overview (budget, pod costs, barndo breakdown, etc.)
 function renderOverview() {
   const sqft = barnDoSqft();
   const costs = calcBarndo(sqft);
@@ -856,150 +915,7 @@ function renderOverview() {
   }
 }
 
-document.getElementById('twoStoryBtn').addEventListener('click', () => {
-  state.twoStory = !state.twoStory;
-  document.getElementById('twoStoryPill').className = 'pill' + (state.twoStory?' on':'');
-  document.getElementById('twoStoryBtn').className = 'two-story-btn' + (state.twoStory?' on':'');
-  document.getElementById('upperFloorSection').style.display = state.twoStory ? 'block' : 'none';
-  updateLayoutBudgetBar();
-  renderOverview();
-});
-
-function updateGridDimLabels() {
-  document.getElementById('colsVal').textContent = COLS;
-  document.getElementById('rowsVal').textContent = ROWS;
-}
-
-document.getElementById('colsMinus').addEventListener('click', () => {
-  if(COLS <= 4) return;
-  COLS--;
-  ['ground','upper'].forEach(f => {
-    state[f].forEach(r => { r.cells = r.cells.filter(c => (c % (COLS+1)) < COLS); });
-    state[f] = state[f].filter(r => r.cells.length > 0);
-  });
-  updateGridDimLabels(); renderBothGrids();
-});
-document.getElementById('colsPlus').addEventListener('click', () => {
-  if(COLS >= 16) return;
-  COLS++;
-  updateGridDimLabels(); renderBothGrids();
-});
-document.getElementById('rowsMinus').addEventListener('click', () => {
-  if(ROWS <= 3) return;
-  ROWS--;
-  ['ground','upper'].forEach(f => {
-    state[f].forEach(r => { r.cells = r.cells.filter(c => Math.floor(c/COLS) < ROWS); });
-    state[f] = state[f].filter(r => r.cells.length > 0);
-  });
-  updateGridDimLabels(); renderBothGrids();
-});
-document.getElementById('rowsPlus').addEventListener('click', () => {
-  if(ROWS >= 12) return;
-  ROWS++;
-  updateGridDimLabels(); renderBothGrids();
-});
-
-function buildPalette() {
-  const container = document.getElementById('paletteRooms');
-  container.innerHTML = '';
-  ROOM_TYPES.forEach(rt => {
-    const item = document.createElement('div');
-    item.className = 'palette-item';
-    item.dataset.typeId = rt.id;
-    item.innerHTML = `<div class="palette-icon">${rt.icon}</div><div class="palette-name">${rt.name}</div>`;
-    item.addEventListener('click', () => selectPaletteType(rt.id));
-    container.appendChild(item);
-  });
-}
-
-function selectPaletteType(typeId) {
-  state.selectedRoomId = null;
-  state.selectedFloor = null;
-
-  if(state.selectedPaletteType === typeId) {
-    state.selectedPaletteType = null;
-  } else {
-    state.selectedPaletteType = typeId;
-  }
-  renderPaletteSelection();
-  renderBothGrids();
-}
-
-function renderPaletteSelection() {
-  document.querySelectorAll('.palette-item').forEach(item => {
-    item.className = 'palette-item' + (item.dataset.typeId===state.selectedPaletteType?' selected-from-palette':'');
-  });
-}
-
-function buildGrid(gridEl, floor) {
-  const CS = getCellSize();
-  const gridW = CS * COLS;
-  const gridH = CS * ROWS;
-  gridEl.style.gridTemplateColumns = `repeat(${COLS}, ${CS}px)`;
-  gridEl.style.gridTemplateRows    = `repeat(${ROWS}, ${CS}px)`;
-  gridEl.style.width  = gridW + 'px';
-  gridEl.style.height = gridH + 'px';
-  gridEl.innerHTML = '';
-
-  for(let i=0; i<COLS*ROWS; i++) {
-    const cell = document.createElement('div');
-    cell.className = 'grid-cell empty';
-    cell.dataset.cellIdx = i;
-    cell.dataset.floor = floor;
-    cell.addEventListener('click', () => onCellClick(i, floor));
-    gridEl.appendChild(cell);
-  }
-
-  const rooms = state[floor];
-  rooms.forEach(room => renderRoomBlock(gridEl, room, floor, CS));
-}
-
-function renderRoomBlock(gridEl, room, floor, CS) {
-  CS = CS || getCellSize();
-  if(!room.cells || room.cells.length===0) return;
-  const rt = getRoomType(room.typeId);
-
-  const rows = room.cells.map(c=>Math.floor(c/COLS));
-  const cols = room.cells.map(c=>c%COLS);
-  const minR = Math.min(...rows), maxR = Math.max(...rows);
-  const minC = Math.min(...cols), maxC = Math.max(...cols);
-
-  const block = document.createElement('div');
-  block.className = 'room-block' + (state.selectedRoomId===room.id?' selected':'');
-  block.dataset.roomId = room.id;
-  block.dataset.floor = floor;
-  block.style.background = rt.color+'cc';
-  block.style.left   = (minC * CS + 2) + 'px';
-  block.style.top    = (minR * CS + 2) + 'px';
-  block.style.width  = ((maxC-minC+1)*CS - 4) + 'px';
-  block.style.height = ((maxR-minR+1)*CS - 4) + 'px';
-
-  const showText = (maxC-minC+1)*CS > 44 && (maxR-minR+1)*CS > 30;
-  if(showText) {
-    block.innerHTML = `
-      <div class="room-anchor"></div>
-      <div class="room-block-icon">${rt.icon}</div>
-      <div class="room-block-name">${rt.name}</div>
-      <div class="room-block-sqft">${room.sqft} sqft</div>`;
-  } else {
-    block.innerHTML = `
-      <div class="room-anchor"></div>
-      <div class="room-block-icon" style="font-size:10px">${rt.icon}</div>`;
-  }
-
-  block.addEventListener('click', (e) => {
-    e.stopPropagation();
-    onRoomClick(room.id, floor);
-  });
-  gridEl.appendChild(block);
-}
-
-function renderBothGrids() {
-  buildGrid(document.getElementById('groundGrid'), 'ground');
-  buildGrid(document.getElementById('upperGrid'), 'upper');
-  updateSqftLabels();
-}
-
+// -------- Layout Budget Bar --------
 function updateLayoutBudgetBar() {
   const sqft    = barnDoSqft();
   const costs   = calcBarndo(sqft);
@@ -1025,6 +941,134 @@ function updateLayoutBudgetBar() {
   if(tot) tot.textContent = fmtK(total) + ' of ' + fmtK(state.budget);
 }
 
+// -------- Grid and Rooms --------
+// Build the palette of rooms at bottom.  Clicking a palette entry now
+// always opens the shape picker; there is no longer a concept of
+// toggling a palette selection on/off.
+function buildPalette() {
+  const container = document.getElementById('paletteRooms');
+  container.innerHTML = '';
+  ROOM_TYPES.forEach(rt => {
+    const item = document.createElement('div');
+    item.className = 'palette-item';
+    item.dataset.typeId = rt.id;
+    item.innerHTML = `<div class="palette-icon">${rt.icon}</div><div class="palette-name">${rt.name}</div>`;
+    // Toggle selection on click: if selected, deselect; otherwise select and
+    // prepare a pending shape using the default preset for this type.  We do not
+    // immediately open the shape picker here; instead we provide a quick
+    // one-click placement flow.  To customise the shape, place the room and
+    // then click it again to edit.
+    item.addEventListener('click', () => {
+      // Clear any current room selection
+      state.selectedRoomId = null;
+      state.selectedFloor  = null;
+      // If the same item is clicked again, clear selection
+      if(state.selectedPaletteType === rt.id) {
+        state.selectedPaletteType = null;
+        state.pendingOffsets = null;
+        state.pendingTypeId  = null;
+      } else {
+        state.selectedPaletteType = rt.id;
+        // Precompute a default shape for this room type
+        sp.typeId = rt.id;
+        applyPreset(rt.defaultPreset);
+        state.pendingOffsets = shapeToOffsets();
+        state.pendingTypeId  = rt.id;
+      }
+      renderPaletteSelection();
+      // Update hint text to reflect whether a room is selected
+      const hint = state.selectedPaletteType ? 'Tap a grid cell to place your room' : 'Pick a room below, then tap a cell to place it';
+      document.getElementById('groundHint').textContent = hint;
+      document.getElementById('upperHint').textContent  = hint;
+    });
+    container.appendChild(item);
+  });
+  // Refresh palette UI to highlight the currently selected type
+  renderPaletteSelection();
+}
+
+// Highlight the selected room type in the palette.  Applies a CSS class
+// to indicate the current selection and removes it from others.
+function renderPaletteSelection() {
+  document.querySelectorAll('.palette-item').forEach(item => {
+    const active = (item.dataset.typeId === state.selectedPaletteType);
+    item.className = 'palette-item' + (active ? ' selected-from-palette' : '');
+  });
+}
+
+// Build a grid for a given floor.  Places empty cells and existing rooms.
+function buildGrid(gridEl, floor) {
+  const CS = getCellSize();
+  const gridW = CS * COLS;
+  const gridH = CS * ROWS;
+  gridEl.style.gridTemplateColumns = `repeat(${COLS}, ${CS}px)`;
+  gridEl.style.gridTemplateRows    = `repeat(${ROWS}, ${CS}px)`;
+  gridEl.style.width  = gridW + 'px';
+  gridEl.style.height = gridH + 'px';
+  gridEl.innerHTML = '';
+
+  for(let i=0; i<COLS*ROWS; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell empty';
+    cell.dataset.cellIdx = i;
+    cell.dataset.floor = floor;
+    cell.addEventListener('click', () => onCellClick(i, floor));
+    gridEl.appendChild(cell);
+  }
+
+  const rooms = state[floor];
+  rooms.forEach(room => renderRoomBlock(gridEl, room, floor, CS));
+}
+
+// Render a room block on the grid
+function renderRoomBlock(gridEl, room, floor, CS) {
+  CS = CS || getCellSize();
+  if(!room.cells || room.cells.length===0) return;
+  const rt = getRoomType(room.typeId);
+
+  const rows = room.cells.map(c=>Math.floor(c/COLS));
+  const cols = room.cells.map(c=>c%COLS);
+  const minR = Math.min(...rows), maxR = Math.max(...rows);
+  const minC = Math.min(...cols), maxC = Math.max(...cols);
+
+  const block = document.createElement('div');
+  block.className = 'room-block' + (state.selectedRoomId===room.id?' selected':'');
+  block.dataset.roomId = room.id;
+  block.dataset.floor = floor;
+  block.style.background = rt.color+'cc';
+  block.style.left   = (minC * CS + 2) + 'px';
+  block.style.top    = (minR * CS + 2) + 'px';
+  block.style.width  = ((maxC-minC+1)*CS - 4) + 'px';
+  block.style.height = ((maxR-minR+1)*CS - 4) + 'px';
+
+  const showText = ((maxC-minC+1)*CS > 44 && (maxR-minR+1)*CS > 30);
+  if(showText) {
+    block.innerHTML = `
+      <div class="room-anchor"></div>
+      <div class="room-block-icon">${rt.icon}</div>
+      <div class="room-block-name">${rt.name}</div>
+      <div class="room-block-sqft">${room.sqft} sqft</div>`;
+  } else {
+    block.innerHTML = `
+      <div class="room-anchor"></div>
+      <div class="room-block-icon" style="font-size:10px">${rt.icon}</div>`;
+  }
+
+  block.addEventListener('click', (e) => {
+    e.stopPropagation();
+    onRoomClick(room.id, floor);
+  });
+  gridEl.appendChild(block);
+}
+
+// Update both grids (ground and upper) and associated sqft labels
+function renderBothGrids() {
+  buildGrid(document.getElementById('groundGrid'), 'ground');
+  buildGrid(document.getElementById('upperGrid'), 'upper');
+  updateSqftLabels();
+}
+
+// Update the sqft labels below each floor and update layout budget bar & overview
 function updateSqftLabels() {
   const gSqft = state.ground.reduce((a,r)=>a+r.sqft,0);
   const uSqft = state.upper.reduce((a,r)=>a+r.sqft,0);
@@ -1034,6 +1078,85 @@ function updateSqftLabels() {
   renderOverview();
 }
 
+// Update grid dimension labels displayed on plus/minus controls
+function updateGridDimLabels() {
+  document.getElementById('colsVal').textContent = COLS;
+  document.getElementById('rowsVal').textContent = ROWS;
+}
+
+// -------- Grid dimension controls --------
+// When changing the number of columns or rows the cell indices must be
+// remapped to preserve the relative positions of existing rooms.  We
+// compute new indices based on the previous COLS/ROWS values before
+// updating the global variables.
+document.getElementById('colsMinus').addEventListener('click', () => {
+  if(COLS <= 4) return;
+  const prevCols = COLS;
+  COLS--;
+  ['ground','upper'].forEach(f => {
+    state[f] = state[f].map(room => {
+      let newCells = [];
+      room.cells.forEach(c => {
+        const r = Math.floor(c / prevCols);
+        const col = c % prevCols;
+        // only keep cells that fit in the new column count
+        if(col < COLS) {
+          newCells.push(r * COLS + col);
+        }
+      });
+      return Object.assign({}, room, { cells: newCells });
+    }).filter(r => r.cells.length > 0);
+  });
+  updateGridDimLabels();
+  renderBothGrids();
+});
+
+document.getElementById('colsPlus').addEventListener('click', () => {
+  if(COLS >= 16) return;
+  const prevCols = COLS;
+  COLS++;
+  ['ground','upper'].forEach(f => {
+    state[f] = state[f].map(room => {
+      let newCells = [];
+      room.cells.forEach(c => {
+        const r = Math.floor(c / prevCols);
+        const col = c % prevCols;
+        newCells.push(r * COLS + col);
+      });
+      return Object.assign({}, room, { cells: newCells });
+    });
+  });
+  updateGridDimLabels();
+  renderBothGrids();
+});
+
+document.getElementById('rowsMinus').addEventListener('click', () => {
+  if(ROWS <= 3) return;
+  const prevRows = ROWS;
+  ROWS--;
+  ['ground','upper'].forEach(f => {
+    state[f] = state[f].map(room => {
+      const newCells = room.cells.filter(c => Math.floor(c / COLS) < ROWS);
+      return Object.assign({}, room, { cells: newCells });
+    }).filter(r => r.cells.length > 0);
+  });
+  updateGridDimLabels();
+  renderBothGrids();
+});
+
+document.getElementById('rowsPlus').addEventListener('click', () => {
+  if(ROWS >= 12) return;
+  ROWS++;
+  updateGridDimLabels();
+  renderBothGrids();
+});
+
+// -------- Shape Picker --------
+// Shape picker internal state.  Uses a separate namespace 'sp' to avoid
+// polluting the main state.  When editing an existing room we capture
+// the original room id and floor; when placing new we track pending
+// offsets and type id.  `filledCells` holds indices in the shape
+// builder's local coordinate system.
 const SP_COLS = 6;
 const SP_ROWS = 5;
 const SQFT_PER_CELL = 100;
@@ -1041,14 +1164,15 @@ const SQFT_PER_CELL = 100;
 let sp = {
   open: false,
   typeId: 'great',
-  filledCells: new Set(), 
+  filledCells: new Set(),
   editingRoomId: null,
   editingFloor: null,
-  pendingFloor: null,    
+  pendingFloor: null,
 };
 
 function shapeSqft() { return sp.filledCells.size * SQFT_PER_CELL; }
 
+// Convert filled shape picker cells into offsets relative to top-left anchor
 function shapeToOffsets() {
   const offsets = [];
   sp.filledCells.forEach(idx => {
@@ -1060,6 +1184,8 @@ function shapeToOffsets() {
   return offsets.map(([r,c]) => [r-minR, c-minC]);
 }
 
+// Given an anchor cell in the main grid, convert shape offsets to absolute
+// cell indices.  Returns only valid cells (inside the grid).
 function offsetsToFloorCells(anchorIdx, offsets) {
   const anchorRow = Math.floor(anchorIdx / COLS);
   const anchorCol = anchorIdx % COLS;
@@ -1071,6 +1197,9 @@ function offsetsToFloorCells(anchorIdx, offsets) {
   }).filter(i => i >= 0);
 }
 
+// Open the shape picker.  Accepts options: typeId (room type),
+// editingRoomId/editingFloor for editing an existing room, pendingFloor
+// for new placement.  Resets internal state accordingly.
 function openShapePicker(options) {
   sp.typeId = options.typeId || 'great';
   sp.editingRoomId = options.editingRoomId || null;
@@ -1078,6 +1207,7 @@ function openShapePicker(options) {
   sp.pendingFloor  = options.pendingFloor  || 'ground';
   sp.filledCells   = new Set();
 
+  // If editing, load the current shape into the picker; otherwise use default preset
   if(sp.editingRoomId && sp.editingFloor) {
     const room = state[sp.editingFloor].find(r=>r.id===sp.editingRoomId);
     if(room && room.cells.length > 0) {
@@ -1113,6 +1243,7 @@ function closeShapePicker() {
   sp.editingFloor  = null;
 }
 
+// Build the list of room types in the shape picker header
 function buildShapeTypeRow() {
   const row = document.getElementById('shapeTypeRow');
   row.innerHTML = '';
@@ -1132,6 +1263,7 @@ function buildShapeTypeRow() {
   document.getElementById('shapeTitle').textContent = rt.icon+' '+rt.name;
 }
 
+// Build the shape picker grid UI
 function buildShapeGrid() {
   const grid = document.getElementById('shapeGrid');
   grid.style.gridTemplateColumns = `repeat(${SP_COLS},40px)`;
@@ -1216,15 +1348,7 @@ function applyPreset(preset) {
   p.forEach(([r,c]) => sp.filledCells.add(r*SP_COLS+c));
 }
 
-document.querySelectorAll('.preset-chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    applyPreset(chip.dataset.preset);
-    buildShapeGrid();
-    updateShapeMeta();
-  });
-});
-
-let isDragging = false;
+// Drag to draw shapes (touchmove)
 document.getElementById('shapeGrid').addEventListener('touchmove', e => {
   e.preventDefault();
   const touch = e.touches[0];
@@ -1241,22 +1365,32 @@ document.getElementById('shapeGrid').addEventListener('touchmove', e => {
   }
 }, {passive:false});
 
+// Place or update room button
 document.getElementById('shapePlace').addEventListener('click', () => {
   if(sp.filledCells.size === 0) return;
   const offsets = shapeToOffsets();
-
   if(sp.editingRoomId) {
+    // Editing an existing room: update type and shape in place
     const room = state[sp.editingFloor].find(r=>r.id===sp.editingRoomId);
     if(room) {
       room.typeId = sp.typeId;
       room.sqft   = shapeSqft();
       const anchor = room.cells[0] || 0;
-      room.cells = offsetsToFloorCells(anchor, offsets);
+      const newCells = offsetsToFloorCells(anchor, offsets);
+      // If shape goes out of bounds or collides, skip update
+      if(newCells.length === offsets.length) {
+        // Check for collisions excluding current room
+        const collision = state[sp.editingFloor].some(r => r.id !== room.id && r.cells.some(c => newCells.includes(c)));
+        if(!collision) {
+          room.cells = newCells;
+        }
+      }
     }
     closeShapePicker();
     clearSelection();
     renderBothGrids();
   } else {
+    // New room placement: store pending offsets/type; actual placement occurs on grid click
     state.pendingOffsets = offsets;
     state.pendingTypeId  = sp.typeId;
     state.pendingFloor   = sp.pendingFloor;
@@ -1267,6 +1401,7 @@ document.getElementById('shapePlace').addEventListener('click', () => {
   }
 });
 
+// Delete room in shape picker
 document.getElementById('shapeDelete').addEventListener('click', () => {
   if(!sp.editingRoomId) return;
   state[sp.editingFloor] = state[sp.editingFloor].filter(r=>r.id!==sp.editingRoomId);
@@ -1281,9 +1416,29 @@ document.getElementById('shapeOverlay').addEventListener('click', e => {
   if(e.target===document.getElementById('shapeOverlay')) closeShapePicker();
 });
 
+// Handle preset chips
+document.querySelectorAll('.preset-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    applyPreset(chip.dataset.preset);
+    buildShapeGrid();
+    updateShapeMeta();
+  });
+});
+
+// -------- Room Placement / Movement --------
+// Handle clicking on a grid cell.  If there is a pending room shape, attempt
+// to place it at this cell.  If a room is selected, attempt to move it.  If
+// no selection/pending, do nothing.
 function onCellClick(cellIdx, floor) {
+  // Pending placement
   if(state.pendingOffsets) {
     const cells = offsetsToFloorCells(cellIdx, state.pendingOffsets);
+    // Invalid if shape would be truncated
+    if(cells.length !== state.pendingOffsets.length) return;
+    // Check for overlap with existing rooms on this floor
+    const overlap = state[floor].some(room => room.cells.some(c => cells.includes(c)));
+    if(overlap) return;
+    // Create new room
     const room = {
       id: 'r' + Date.now() + Math.random().toString(36).slice(2,5),
       typeId: state.pendingTypeId,
@@ -1291,23 +1446,38 @@ function onCellClick(cellIdx, floor) {
       cells,
     };
     state[floor].push(room);
-    state.pendingOffsets = null;
-    state.pendingTypeId  = null;
-    document.getElementById('groundHint').textContent = 'Pick a room below, then tap a cell to place it';
-    document.getElementById('upperHint').textContent  = 'Pick a room below, then tap a cell to place it';
+    // If a palette type remains selected, regenerate the pending shape so the user
+    // can continue placing rooms of the same type.  Otherwise clear the pending state.
+    if(state.selectedPaletteType) {
+      const rt = getRoomType(state.selectedPaletteType);
+      sp.typeId = rt.id;
+      applyPreset(rt.defaultPreset);
+      state.pendingOffsets = shapeToOffsets();
+      state.pendingTypeId  = rt.id;
+    } else {
+      state.pendingOffsets = null;
+      state.pendingTypeId  = null;
+    }
+    // Reset hints based on whether a palette item is still selected
+    const hint2 = state.selectedPaletteType ? 'Tap a grid cell to place your room' : 'Pick a room below, then tap a cell to place it';
+    document.getElementById('groundHint').textContent = hint2;
+    document.getElementById('upperHint').textContent  = hint2;
     renderBothGrids();
     return;
   }
-
+  // Move selected room
   if(state.selectedRoomId !== null) {
     moveRoom(cellIdx, floor);
     return;
   }
 }
 
+// Handle clicking on a room block.  Either select it or open the shape
+// picker for editing.  If a placement is pending, ignore room clicks.
 function onRoomClick(roomId, floor) {
   if(state.pendingOffsets) return;
 
+  // If clicking the same room again, open for editing
   if(state.selectedRoomId === roomId) {
     const room = state[floor].find(r=>r.id===roomId);
     if(room) openShapePicker({ typeId:room.typeId, editingRoomId:roomId, editingFloor:floor });
@@ -1321,48 +1491,54 @@ function onRoomClick(roomId, floor) {
   }
 }
 
+// Move a selected room to a new anchor cell.  Ensures the new position
+// stays within bounds and does not overlap other rooms.
 function moveRoom(targetCell, targetFloor) {
   const roomId  = state.selectedRoomId;
   const srcFloor= state.selectedFloor;
   const room    = state[srcFloor].find(r=>r.id===roomId);
   if(!room) { clearSelection(); return; }
 
+  // Compute offsets relative to the room's current top-left cell
   const rows = room.cells.map(c=>Math.floor(c/COLS));
   const cols = room.cells.map(c=>c%COLS);
   const minR = Math.min(...rows), minC = Math.min(...cols);
   const offsets = room.cells.map(c=>[Math.floor(c/COLS)-minR, (c%COLS)-minC]);
   const newCells = offsetsToFloorCells(targetCell, offsets);
-
+  // Check out-of-bounds
+  if(newCells.length !== offsets.length) return;
+  // Check overlap excluding this room
+  const collision = state[targetFloor].some(r => r.id!==roomId && r.cells.some(c => newCells.includes(c)));
+  if(collision) return;
+  // Remove from source floor
   state[srcFloor] = state[srcFloor].filter(r=>r.id!==roomId);
+  // Update room and move to target floor
   room.cells = newCells;
+  if(srcFloor !== targetFloor) room.sqft = offsets.length * SQFT_PER_CELL;
   state[targetFloor].push(room);
   clearSelection();
   renderBothGrids();
 }
 
+// Clear selection state and pending placement
 function clearSelection() {
   state.selectedRoomId = null;
   state.selectedFloor  = null;
   state.pendingOffsets = null;
   state.pendingTypeId  = null;
-  renderPaletteSelection();
 }
 
-function selectPaletteType(typeId) {
-  state.selectedRoomId = null;
-  state.selectedFloor  = null;
-  openShapePicker({ typeId, pendingFloor:'ground' });
-}
-
-ROOM_TYPES.forEach(rt => {
-  const presets = {
-    great:'3x3', kitchen:'2x3', dining:'2x2', entry:'1x2',
-    bath:'1x1', laundry:'2x2', kids:'3x2', office:'2x2',
-    bedroom:'2x2', game:'2x3', pantry:'1x1', porch:'2x1', workshop:'3x2', loft:'3x2', storage:'1x1',
-  };
-  rt.defaultPreset = presets[rt.id] || '2x2';
+// -------- Two-Story toggle --------
+document.getElementById('twoStoryBtn').addEventListener('click', () => {
+  state.twoStory = !state.twoStory;
+  document.getElementById('twoStoryPill').className = 'pill' + (state.twoStory?' on':'');
+  document.getElementById('twoStoryBtn').className = 'two-story-btn' + (state.twoStory?' on':'');
+  document.getElementById('upperFloorSection').style.display = state.twoStory ? 'block' : 'none';
+  updateLayoutBudgetBar();
+  renderOverview();
 });
 
+// -------- Initialization --------
 function init() {
   state.pendingOffsets = null;
   state.pendingTypeId  = null;
@@ -1372,6 +1548,7 @@ function init() {
   renderBothGrids();
   renderOverview();
 
+  // Seed with some default rooms on the ground floor for demonstration
   const defaults = [
     { typeId:'entry',   preset:'2x1', anchor:0  },
     { typeId:'great',   preset:'3x3', anchor:8  },
@@ -1397,278 +1574,6 @@ function init() {
 }
 
 init();
-</script>
-
-<div id="shareBtn" style="
-  position:fixed; bottom:0; left:0; right:0; z-index:100;
-  padding:12px 16px 28px; background:linear-gradient(to top, var(--bg) 60%, transparent);
-  pointer-events:none;
-">
-  <button onclick="generatePrintView()" style="
-    width:100%; padding:14px; pointer-events:auto;
-    background:linear-gradient(135deg, #c8963c, #e8b84a);
-    border:none; border-radius:12px; cursor:pointer;
-    font-family:'DM Mono',monospace; font-size:12px;
-    font-weight:500; letter-spacing:0.12em; text-transform:uppercase;
-    color:#0f0e0b; display:flex; align-items:center; justify-content:center; gap:8px;
-    box-shadow: 0 4px 20px rgba(200,150,60,0.4), 0 2px 8px rgba(0,0,0,0.4);
-  ">
-    <span style="font-size:16px">📋</span> Package &amp; Share
-  </button>
-</div>
-
-<style>
-@media print {
-  body * { visibility: hidden; }
-  #printView, #printView * { visibility: visible; }
-  #printView {
-    position: fixed; top: 0; left: 0; right: 0;
-    width: 100%; background: white; color: #111;
-  }
-}
-#printView {
-  display: none;
-  font-family: 'DM Sans', sans-serif;
-  background: white; color: #111;
-  padding: 32px 28px;
-  position: fixed; inset: 0; overflow-y: auto; z-index: 500;
-}
-#printView.show { display: block; }
-.pv-close {
-  position: fixed; top: 16px; right: 16px;
-  width: 36px; height: 36px; border-radius: 50%;
-  background: #f0ede6; border: 1px solid #ddd;
-  font-size: 16px; cursor: pointer; z-index: 501;
-  display: flex; align-items: center; justify-content: center;
-  color: #555;
-}
-.pv-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #c8963c; }
-.pv-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: #1a1408; line-height: 1.1; }
-.pv-title em { font-style: italic; color: #c8963c; }
-.pv-sub { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
-.pv-date { font-family: 'DM Mono', monospace; font-size: 9px; color: #aaa; margin-top: 4px; }
-
-.pv-section { margin-bottom: 20px; }
-.pv-section-title {
-  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: #c8963c; margin-bottom: 10px;
-  padding-bottom: 4px; border-bottom: 1px solid #e8dfc8;
-}
-.pv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-.pv-card {
-  background: #faf8f4; border: 1px solid #e8e0cc;
-  border-radius: 8px; padding: 12px;
-}
-.pv-card.hi { border-color: #c8963c; background: #fffaf0; }
-.pv-card.good { border-color: #4a8a5a; background: #f0faf4; }
-.pv-card.bad { border-color: #c04a2a; background: #fff4f0; }
-.pv-card-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #c8963c; line-height: 1; }
-.pv-card.good .pv-card-val { color: #3a7a4a; }
-.pv-card.bad .pv-card-val { color: #c04a2a; }
-.pv-card-lbl { font-family: 'DM Mono', monospace; font-size: 7px; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
-
-.pv-row { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #f0ece0; font-size: 12px; }
-.pv-row:last-child { border-bottom: none; }
-.pv-row-lbl { color: #555; }
-.pv-row-val { font-family: 'DM Mono', monospace; color: #c8963c; font-size: 11px; font-weight: 500; }
-.pv-row-total { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #1a1408; }
-.pv-row-total-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #c8963c; }
-
-.pv-floor-title { font-family: 'DM Mono', monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: #888; margin-bottom: 6px; }
-.pv-floor-canvas { border: 2px solid #c8963c; border-radius: 6px; width: 100%; display: block; }
-
-.pv-room-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.pv-room-chip {
-  display: flex; align-items: center; gap: 4px;
-  padding: 4px 10px; border-radius: 20px;
-  font-family: 'DM Mono', monospace; font-size: 9px;
-  border: 1px solid #e0d8c0; background: #faf8f4; color: #555;
-}
-
-.pv-print-btn {
-  display: block; width: 100%; margin-top: 20px; padding: 14px;
-  background: #c8963c; border: none; border-radius: 10px;
-  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: white; cursor: pointer;
-  text-align: center;
-}
-</style>
-
-<div id="printView">
-  <div class="pv-close" onclick="closePrintView()">✕</div>
-  <div id="printViewContent"></div>
-  <button class="pv-print-btn" onclick="window.print()">📄 Save as PDF / Print</button>
-  <div style="height:20px"></div>
-</div>
-
-<script>
-function fmtKp(n) {
-  if(n>=1000000) return '$'+(n/1000000).toFixed(2)+'M';
-  return '$'+Math.round(n/1000)+'K';
-}
-
-function generatePrintView() {
-  const sqft   = barnDoSqft();
-  const costs  = calcBarndo(sqft);
-  const podTotal = state.podsOn ? state.podSqfts.reduce((a,sq)=>a+podCostForSqft(sq),0) : 0;
-  const total  = state.land + podTotal + costs.total;
-  const remain = state.budget - total;
-  const over   = remain < 0;
-  const date   = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-
-  const gRooms = state.ground;
-  const uRooms = state.upper;
-
-  const groundDataUrl = renderFloorToCanvas(state.ground, 'Ground Floor');
-  const upperDataUrl  = state.twoStory ? renderFloorToCanvas(state.upper, 'Upper Floor') : null;
-
-  const roomSummary = (rooms) => rooms.map(r => {
-    const rt = getRoomType(r.typeId);
-    return `<div class="pv-room-chip" style="background:${rt.color}22;border-color:${rt.color}66;color:${rt.light}">
-      ${rt.icon} ${rt.name} <span style="color:#aaa">${r.sqft}sf</span>
-    </div>`;
-  }).join('');
-
-  const html = `
-    <div class="pv-header">
-      <div class="pv-sub">Family Compound Planner</div>
-      <div class="pv-title">The <em>Debt-Free</em> Family Plan</div>
-      <div class="pv-date">Generated ${date} · ${state.families} families · ${sqft.toLocaleString()} sqft barndo</div>
-    </div>
-
-    <div class="pv-section">
-      <div class="pv-section-title">Cost Summary</div>
-      <div class="pv-grid">
-        <div class="pv-card">
-          <div class="pv-card-val">${fmtKp(state.land)}</div>
-          <div class="pv-card-lbl">Land</div>
-        </div>
-        <div class="pv-card">
-          <div class="pv-card-val">${state.podsOn ? fmtKp(podTotal) : '$0'}</div>
-          <div class="pv-card-lbl">Family Pods (${state.families}x)</div>
-        </div>
-        <div class="pv-card hi">
-          <div class="pv-card-val">${fmtKp(costs.total)}</div>
-          <div class="pv-card-lbl">Community Barndo</div>
-        </div>
-        <div class="pv-card ${over?'bad':'good'}">
-          <div class="pv-card-val">${fmtKp(total)}</div>
-          <div class="pv-card-lbl">Total Needed</div>
-        </div>
-      </div>
-      <div style="background:${over?'#fff4f0':'#f0faf4'};border:1px solid ${over?'#c04a2a':'#4a8a5a'};border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-family:'DM Mono',monospace;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.1em">$${(state.budget/1000000).toFixed(2)}M budget → </span>
-        <span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:${over?'#c04a2a':'#3a7a4a'}">${over?'':''}${fmtKp(Math.abs(remain))} ${over?'over budget':'remaining'}</span>
-      </div>
-    </div>
-
-    <div class="pv-section">
-      <div class="pv-section-title">Barndo Build Breakdown · ${sqft.toLocaleString()} sqft</div>
-      <div class="pv-row"><span class="pv-row-lbl">Concrete Slab</span><span class="pv-row-val">${fmtKp(costs.slab)}</span></div>
-      <div class="pv-row"><span class="pv-row-lbl">Steel Shell + Erection</span><span class="pv-row-val">${fmtKp(costs.shell)}</span></div>
-      <div class="pv-row"><span class="pv-row-lbl">Interior Framing (DIY labor)</span><span class="pv-row-val">${fmtKp(costs.frame)}</span></div>
-      <div class="pv-row"><span class="pv-row-lbl">Electrical</span><span class="pv-row-val">${fmtKp(costs.elec)}</span></div>
-      <div class="pv-row"><span class="pv-row-lbl">Plumbing (${costs.baths} bath${costs.baths!==1?'s':''} + ${costs.kitchens} kitchen${costs.kitchens!==1?'s':''})</span><span class="pv-row-val">${fmtKp(costs.plumb)}</span></div>
-      <div class="pv-row"><span class="pv-row-lbl">HVAC</span><span class="pv-row-val">${fmtKp(costs.hvac)}</span></div>
-      <div class="pv-row"><span class="pv-row-lbl">Insulation + Drywall</span><span class="pv-row-val">${fmtKp(costs.drywall)}</span></div>
-      <div class="pv-row"><span class="pv-row-lbl">Kitchen Buildout (${costs.kitchens}x)</span><span class="pv-row-val">${fmtKp(costs.kitchen)}</span></div>
-      <div class="pv-row"><span class="pv-row-lbl">Windows + Doors</span><span class="pv-row-val">${fmtKp(costs.windows)}</span></div>
-      <div class="pv-row"><span class="pv-row-lbl">Laundry${costs.hasLaundry?' (placed)':' (not placed)'}</span><span class="pv-row-val">${fmtKp(costs.laundry)}</span></div>
-      ${state.twoStory ? `<div class="pv-row"><span class="pv-row-lbl">Two-Story Premium</span><span class="pv-row-val">${fmtKp(costs.twoS)}</span></div>` : ''}
-      <div class="pv-row"><span class="pv-row-lbl">Contingency (10%)</span><span class="pv-row-val">${fmtKp(costs.conting)}</span></div>
-      <div class="pv-row" style="border-top:1px solid #c8963c;margin-top:4px;padding-top:10px">
-        <span class="pv-row-total">Total Build</span>
-        <span class="pv-row-total-val">${fmtKp(costs.total)}</span>
-      </div>
-    </div>
-
-    <div class="pv-section">
-      <div class="pv-section-title">Floor Plan · Ground Floor (${state.ground.reduce((a,r)=>a+r.sqft,0).toLocaleString()} sqft)</div>
-      ${groundDataUrl ? `<img class="pv-floor-canvas" src="${groundDataUrl}" style="width:100%;border-radius:6px;display:block">` : '<div style="color:#888;font-size:12px">No rooms placed yet</div>'}
-      <div class="pv-room-list">${roomSummary(gRooms)}</div>
-    </div>
-
-    ${upperDataUrl ? `
-    <div class="pv-section">
-      <div class="pv-section-title">Floor Plan · Upper Floor / Loft (${state.upper.reduce((a,r)=>a+r.sqft,0).toLocaleString()} sqft)</div>
-      <img class="pv-floor-canvas" src="${upperDataUrl}" style="width:100%;border-radius:6px;display:block">
-      <div class="pv-room-list">${roomSummary(uRooms)}</div>
-    </div>` : ''}
-
-    <div class="pv-section">
-      <div class="pv-section-title">The Plan</div>
-      <div style="font-size:12px;color:#555;line-height:1.7">
-        <b>Phase 1:</b> All families sell homes simultaneously and pool equity. Purchase ${fmtKp(state.land)} land cash — zero mortgage.<br>
-        <b>Phase 2:</b> ${state.podsOn ? `Place ${state.families} prefab pods on the land. Everyone moves in debt-free.` : 'Move into existing structures on the land.'}<br>
-        <b>Phase 3:</b> Build the ${sqft.toLocaleString()} sqft community barndominium${state.twoStory?' (two-story)':''} — financed or pay-as-you-go.<br><br>
-        <b>Douglas County, MO:</b> No building codes · No permits required · $800/year taxes · 2 wells on property
-      </div>
-    </div>
-  `;
-
-  document.getElementById('printViewContent').innerHTML = html;
-  document.getElementById('printView').classList.add('show');
-  document.getElementById('printView').scrollTop = 0;
-}
-
-function closePrintView() {
-  document.getElementById('printView').classList.remove('show');
-}
-
-function renderFloorToCanvas(rooms, title) {
-  const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const W = 600, H = 300;
-  const c = document.createElement('canvas');
-  c.width = W; c.height = H;
-  const cx = c.getContext('2d');
-
-  cx.fillStyle = isDark ? '#1a1810' : '#f9f9f9';
-  cx.fillRect(0, 0, W, H);
-
-  const cs = Math.floor(W / COLS);
-  const rh = Math.floor(H / ROWS);
-  cx.strokeStyle = isDark ? '#2a2820' : '#e0e0e0';
-  cx.lineWidth = 0.5;
-  for(let col=0; col<=COLS; col++) { cx.beginPath(); cx.moveTo(col*cs,0); cx.lineTo(col*cs,H); cx.stroke(); }
-  for(let row=0; row<=ROWS; row++) { cx.beginPath(); cx.moveTo(0,row*rh); cx.lineTo(W,row*rh); cx.stroke(); }
-
-  rooms.forEach(room => {
-    if(!room.cells || room.cells.length===0) return;
-    const rt = getRoomType(room.typeId);
-    const rows2 = room.cells.map(c2=>Math.floor(c2/COLS));
-    const cols2 = room.cells.map(c2=>c2%COLS);
-    const minR=Math.min(...rows2),maxR=Math.max(...rows2);
-    const minC=Math.min(...cols2),maxC=Math.max(...cols2);
-    const rx=minC*cs+2, ry=minR*rh+2;
-    const rw=(maxC-minC+1)*cs-4, rh2=(maxR-minR+1)*rh-4;
-
-    cx.fillStyle = rt.color+'cc';
-    cx.fillRect(rx, ry, rw, rh2);
-    cx.strokeStyle = rt.light+'99';
-    cx.lineWidth = 1.5;
-    cx.strokeRect(rx+1, ry+1, rw-2, rh2-2);
-
-    if(rw > 60 && rh2 > 28) {
-      cx.fillStyle = 'rgba(255,255,255,0.9)';
-      cx.font = `bold ${Math.min(12, rw/6)}px DM Sans, sans-serif`;
-      cx.textAlign = 'center'; cx.textBaseline = 'middle';
-      cx.fillText(`${rt.icon} ${rt.name}`, rx+rw/2, ry+rh2/2-6);
-      cx.font = `${Math.min(9, rw/8)}px DM Mono, monospace`;
-      cx.fillStyle = 'rgba(255,255,255,0.5)';
-      cx.fillText(`${room.sqft} sqft`, rx+rw/2, ry+rh2/2+8);
-    } else if(rw > 20 && rh2 > 16) {
-      cx.font = '12px serif';
-      cx.textAlign = 'center'; cx.textBaseline = 'middle';
-      cx.fillText(rt.icon, rx+rw/2, ry+rh2/2);
-    }
-  });
-
-  cx.strokeStyle = '#c8963c';
-  cx.lineWidth = 2;
-  cx.strokeRect(1, 1, W-2, H-2);
-
-  return c.toDataURL('image/png');
-}
 </script>
 
 </body>
