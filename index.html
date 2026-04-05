@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<!-- saved from url=(0060)file:///Users/jacobmetcalf/Downloads/family-compound-v2.html -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="en">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Family Compound Planner</title>
 <style>
@@ -194,11 +194,12 @@ nav {
 
 /* Floor area */
 .floors-area {
-  flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
-  padding:10px 14px 80px;
+  flex:1; overflow-y:auto; overflow-x:auto; -webkit-overflow-scrolling:touch;
+  padding:10px 0 80px;
 }
 
-.floor-section { margin-bottom:14px; }
+.floor-section { margin-bottom:14px; padding:0 14px; }
+.floor-section .barndo-grid { margin:0; }
 .floor-header {
   display:flex; align-items:center; justify-content:space-between;
   margin-bottom:8px;
@@ -212,6 +213,7 @@ nav {
   border-radius:6px; overflow:hidden; position:relative;
   display:grid; user-select:none;
   touch-action:none;
+  width:100%; box-sizing:border-box;
 }
 
 .grid-cell {
@@ -438,17 +440,9 @@ nav {
     </div>
 
     <div id="podFields">
-      <div style="margin-top:10px;font-family:&#39;DM Mono&#39;,monospace;font-size:24px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Size per home (sqft)</div>
-      <div id="podInputs"><div class="pod-sqft-row">
-      <div class="pod-sqft-label">Jake's Family</div>
-      <input class="pod-sqft-input" type="number" inputmode="numeric" value="800" min="400" max="2000" data-idx="0"></div><div class="pod-sqft-row">
-      <div class="pod-sqft-label">Brother 1</div>
-      <input class="pod-sqft-input" type="number" inputmode="numeric" value="800" min="400" max="2000" data-idx="1"></div><div class="pod-sqft-row">
-      <div class="pod-sqft-label">Brother 2</div>
-      <input class="pod-sqft-input" type="number" inputmode="numeric" value="800" min="400" max="2000" data-idx="2"></div><div class="pod-sqft-row">
-      <div class="pod-sqft-label">Family 4</div>
-      <input class="pod-sqft-input" type="number" inputmode="numeric" value="800" min="400" max="2000" data-idx="3"></div></div>
-      <div style="margin-top:8px;font-family:&#39;DM Mono&#39;,monospace;font-size:24px;color:var(--text3)">Est. cost per home: <span id="podCostEach" style="color:var(--gold2)">$77,200</span> all-in · <span id="podCostTotal" style="color:var(--gold2)">$309K</span> total</div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:24px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Size per home (sqft)</div>
+      <div id="podInputs"></div>
+      <div style="margin-top:8px;font-family:'DM Mono',monospace;font-size:24px;color:var(--text3)">Est. cost per home: <span id="podCostEach" style="color:var(--gold2)">$82,000</span> all-in · <span id="podCostTotal" style="color:var(--gold2)">$328,000</span> total</div>
     </div>
   </div>
 
@@ -461,15 +455,15 @@ nav {
         <div class="cc-lbl">Land</div>
       </div>
       <div class="cost-card">
-        <div class="cc-val" id="sumPods">$309K</div>
+        <div class="cc-val" id="sumPods">$328K</div>
         <div class="cc-lbl">Family Pods</div>
       </div>
       <div class="cost-card hi">
-        <div class="cc-val" id="sumBarndo">$269K</div>
+        <div class="cc-val" id="sumBarndo">$225K</div>
         <div class="cc-lbl">Community Barndo (est.)</div>
       </div>
-      <div class="cost-card bad">
-        <div class="cc-val" id="sumTotal">$1.33M</div>
+      <div class="cost-card">
+        <div class="cc-val" id="sumTotal">$1.30M</div>
         <div class="cc-lbl">Total Needed</div>
       </div>
     </div>
@@ -478,21 +472,21 @@ nav {
   <!-- BREAKDOWN -->
   <div class="section">
     <div class="section-title">Barndo Cost Breakdown</div>
-    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Concrete Slab</span><span class="brow-val" id="bSlab">$26K</span></div>
-    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Steel Shell + Erection</span><span class="brow-val" id="bShell">$62K</span></div>
-    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Interior Framing (DIY)</span><span class="brow-val" id="bFrame">$21K</span></div>
-    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Electrical</span><span class="brow-val" id="bElec">$28K</span></div>
-    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Plumbing (1 bath + 1 kitchen)</span><span class="brow-val" id="bPlumb">$16K</span></div>
-    <div class="brow"><span class="brow-lbl"><span class="badge bs">SEMI</span>HVAC</span><span class="brow-val" id="bHvac">$21K</span></div>
-    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Insulation + Drywall</span><span class="brow-val" id="bDrywall">$25K</span></div>
-    <div class="brow"><span class="brow-lbl"><span class="badge bs">SEMI</span>Kitchen Buildout (1x)</span><span class="brow-val" id="bKitch">$18K</span></div>
-    <div class="brow"><span class="brow-lbl"><span class="badge bs">SEMI</span>Windows + Doors</span><span class="brow-val" id="bWin">$17K</span></div>
-    <div class="brow"><span class="brow-lbl"><span class="badge bs">SEMI</span>Laundry (placed)</span><span class="brow-val" id="bLaundry">$11K</span></div>
-    <div class="brow" id="bTwoStoryRow" style="display:none"><span class="brow-lbl"><span class="badge bs">2-FL</span>Two-Story Premium</span><span class="brow-val" id="bTwoStory">$0K</span></div>
-    <div class="brow"><span class="brow-lbl"><span class="badge bf">AUTO</span>Contingency (10%)</span><span class="brow-val" id="bConting">$24K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Concrete Slab</span><span class="brow-val" id="bSlab">$19K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Steel Shell + Erection</span><span class="brow-val" id="bShell">$45K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Interior Framing (DIY)</span><span class="brow-val" id="bFrame">$15K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Electrical</span><span class="brow-val" id="bElec">$20K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Plumbing</span><span class="brow-val" id="bPlumb">$25K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bs">SEMI</span>HVAC</span><span class="brow-val" id="bHvac">$15K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Insulation + Drywall</span><span class="brow-val" id="bDrywall">$18K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bs">SEMI</span>Kitchen Buildout</span><span class="brow-val" id="bKitch">$25K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bs">SEMI</span>Windows + Doors</span><span class="brow-val" id="bWin">$12K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bs">SEMI</span>Laundry (4 sets)</span><span class="brow-val" id="bLaundry">$11K</span></div>
+    <div class="brow" id="bTwoStoryRow" style="display:none"><span class="brow-lbl"><span class="badge bs">2-FL</span>Two-Story Premium</span><span class="brow-val" id="bTwoStory">$23K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bf">AUTO</span>Contingency (10%)</span><span class="brow-val" id="bConting">$21K</span></div>
     <div class="brow" style="border-top:1px solid var(--gold);margin-top:4px;padding-top:10px">
-      <span style="font-family:&#39;Playfair Display&#39;,serif;font-size:15px;font-weight:700;color:var(--cream)">Total Build</span>
-      <span style="font-family:&#39;Playfair Display&#39;,serif;font-size:24px;font-weight:700;color:var(--gold2)" id="bTotal">$269K</span>
+      <span style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--cream)">Total Build</span>
+      <span style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--gold2)" id="bTotal">$225K</span>
     </div>
   </div>
 
@@ -500,21 +494,23 @@ nav {
   <div class="bbar-wrap">
     <div class="bbar-top">
       <span class="bbar-lbl">Budget remaining</span>
-      <span class="bbar-remain" id="bbarRemain" style="color: var(--red2);">$227K OVER</span>
+      <span class="bbar-remain" id="bbarRemain">—</span>
     </div>
-    <div class="bbar-track"><div class="bbar-fill" id="bbarFill" style="width: 100%; background: var(--gold);"></div></div>
-    <div class="bbar-sub"><span id="bbarLeft">$1,100,000 budget</span><span id="bbarPct">100% used</span></div>
+    <div class="bbar-track"><div class="bbar-fill" id="bbarFill" style="width:0%"></div></div>
+    <div class="bbar-sub"><span id="bbarLeft">—</span><span id="bbarPct">—</span></div>
   </div>
 
   <!-- DEBT FREE NOTE -->
   <div style="margin:0 16px 16px;background:#0e1e10;border:1px solid var(--green);border-radius:10px;padding:14px;text-align:center">
     <div style="font-size:24px;margin-bottom:4px">✅</div>
-    <div style="font-family:&#39;Playfair Display&#39;,serif;font-size:17px;font-weight:700;color:var(--green2);margin-bottom:4px">Debt Free After Phase 1 + 2</div>
-    <div style="font-family:&#39;DM Mono&#39;,monospace;font-size:15px;color:#5a9a6a;line-height:1.6">Land owned outright · Pods placed · Everyone has a home<br>Barndo built on your own terms — finance or pay-as-you-go</div>
+    <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--green2);margin-bottom:4px">Debt Free After Phase 1 + 2</div>
+    <div style="font-family:'DM Mono',monospace;font-size:15px;color:#5a9a6a;line-height:1.6">Land owned outright · Pods placed · Everyone has a home<br>Barndo built on your own terms — finance or pay-as-you-go</div>
   </div>
 
   <div style="height:90px"></div>
-</div> ══════════ --&gt;
+</div>
+
+<!-- ══════════ LAYOUT TAB ══════════ -->
 <div class="view" id="vLayout">
   <div class="layout-view-inner">
 
@@ -527,23 +523,25 @@ nav {
           <style>#twoStoryPill::after{width:14px;height:14px;top:3px;left:3px}</style>
         </div>
       </div>
-      <div style="font-family:&#39;DM Mono&#39;,monospace;font-size:24px;color:var(--text3);letter-spacing:.08em">
-        Place rooms below · costs update live
-      </div>
 
-      <!-- Grid dimension controls -->
-      <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
-        <span style="font-family:&#39;DM Mono&#39;,monospace;font-size:24px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Grid</span>
-        <div style="display:flex;align-items:center;background:var(--surf2);border:1px solid var(--border);border-radius:6px;overflow:hidden">
-          <div class="counter-btn" id="colsMinus" style="width:26px;height:28px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--gold2);cursor:pointer;user-select:none">−</div>
-          <span id="colsVal" style="font-family:&#39;DM Mono&#39;,monospace;font-size:24px;color:var(--text);width:18px;text-align:center">8</span>
-          <div class="counter-btn" id="colsPlus" style="width:26px;height:28px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--gold2);cursor:pointer;user-select:none">+</div>
+      <!-- Live sqft + grid controls -->
+      <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+        <div style="text-align:right">
+          <div id="gridSqftLabel" style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold2);line-height:1">0</div>
+          <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">sqft</div>
         </div>
-        <span style="font-family:&#39;DM Mono&#39;,monospace;font-size:24px;color:var(--text3)">×</span>
+        <div style="width:1px;height:28px;background:var(--border)"></div>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Grid</span>
         <div style="display:flex;align-items:center;background:var(--surf2);border:1px solid var(--border);border-radius:6px;overflow:hidden">
-          <div class="counter-btn" id="rowsMinus" style="width:26px;height:28px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--gold2);cursor:pointer;user-select:none">−</div>
-          <span id="rowsVal" style="font-family:&#39;DM Mono&#39;,monospace;font-size:24px;color:var(--text);width:18px;text-align:center">6</span>
-          <div class="counter-btn" id="rowsPlus" style="width:26px;height:28px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--gold2);cursor:pointer;user-select:none">+</div>
+          <div class="counter-btn" id="colsMinus" style="width:28px;height:30px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--gold2);cursor:pointer;user-select:none">−</div>
+          <span id="colsVal" style="font-family:'DM Mono',monospace;font-size:14px;color:var(--text);width:20px;text-align:center">8</span>
+          <div class="counter-btn" id="colsPlus" style="width:28px;height:30px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--gold2);cursor:pointer;user-select:none">+</div>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">×</span>
+        <div style="display:flex;align-items:center;background:var(--surf2);border:1px solid var(--border);border-radius:6px;overflow:hidden">
+          <div class="counter-btn" id="rowsMinus" style="width:28px;height:30px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--gold2);cursor:pointer;user-select:none">−</div>
+          <span id="rowsVal" style="font-family:'DM Mono',monospace;font-size:14px;color:var(--text);width:20px;text-align:center">6</span>
+          <div class="counter-btn" id="rowsPlus" style="width:28px;height:30px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--gold2);cursor:pointer;user-select:none">+</div>
         </div>
       </div>
     </div>
@@ -552,14 +550,14 @@ nav {
     <div id="layoutBudgetBar" style="flex-shrink:0;padding:8px 14px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
       <div style="flex:1">
         <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px">
-          <div id="lbFill" style="height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; width: 100%; background: var(--red);"></div>
+          <div id="lbFill" style="height:100%;border-radius:3px;transition:width .3s,background .3s;width:0%"></div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:baseline">
-          <span id="lbLabel" style="font-family:&#39;DM Mono&#39;,monospace;font-size:24px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Budget</span>
-          <span id="lbTotal" style="font-family:&#39;DM Mono&#39;,monospace;font-size:15px;color:var(--text3)">$1.33M of $1.10M</span>
+          <span id="lbLabel" style="font-family:'DM Mono',monospace;font-size:24px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Budget</span>
+          <span id="lbTotal" style="font-family:'DM Mono',monospace;font-size:15px;color:var(--text3)">—</span>
         </div>
       </div>
-      <div id="lbStatus" style="font-family: &quot;Playfair Display&quot;, serif; font-size: 24px; font-weight: 700; white-space: nowrap; text-align: right; min-width: 90px; color: var(--red2);">$227K over</div>
+      <div id="lbStatus" style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;white-space:nowrap;text-align:right;min-width:90px">—</div>
     </div>
 
     <!-- Floors -->
@@ -568,35 +566,14 @@ nav {
       <div class="floor-section" id="groundFloorSection">
         <div class="floor-header">
           <div class="floor-title">Ground Floor</div>
-          <div class="floor-sqft" id="groundSqftLabel">2,900 sqft</div>
         </div>
-        <div class="barndo-grid" id="groundGrid" style="grid-template-columns: repeat(8, 253px); grid-template-rows: repeat(6, 253px); width: 2024px; height: 1518px;"><div class="grid-cell empty" data-cell-idx="0" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="1" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="2" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="3" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="4" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="5" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="6" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="7" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="8" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="9" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="10" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="11" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="12" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="13" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="14" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="15" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="16" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="17" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="18" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="19" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="20" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="21" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="22" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="23" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="24" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="25" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="26" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="27" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="28" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="29" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="30" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="31" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="32" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="33" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="34" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="35" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="36" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="37" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="38" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="39" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="40" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="41" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="42" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="43" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="44" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="45" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="46" data-floor="ground"></div><div class="grid-cell empty" data-cell-idx="47" data-floor="ground"></div><div class="room-block" data-room-id="r1775393852392g5g" data-floor="ground" style="background: rgba(42, 90, 42, 0.8); left: 2px; top: 2px; width: 249px; height: 502px;">
-      <div class="room-anchor"></div>
-      <div class="room-block-icon">🚪</div>
-      <div class="room-block-name">Entry</div>
-      <div class="room-block-sqft">200 sqft</div></div><div class="room-block" data-room-id="r1775393852392qcl" data-floor="ground" style="background: rgba(26, 58, 106, 0.8); left: 2px; top: 255px; width: 755px; height: 755px;">
-      <div class="room-anchor"></div>
-      <div class="room-block-icon">🛋</div>
-      <div class="room-block-name">Great Room</div>
-      <div class="room-block-sqft">900 sqft</div></div><div class="room-block" data-room-id="r1775393852392wd4" data-floor="ground" style="background: rgba(106, 74, 16, 0.8); left: 1267px; top: 255px; width: 755px; height: 502px;">
-      <div class="room-anchor"></div>
-      <div class="room-block-icon">🍳</div>
-      <div class="room-block-name">Kitchen</div>
-      <div class="room-block-sqft">600 sqft</div></div><div class="room-block" data-room-id="r1775393852392nv5" data-floor="ground" style="background: rgba(26, 74, 42, 0.8); left: 1014px; top: 508px; width: 502px; height: 249px;">
-      <div class="room-anchor"></div>
-      <div class="room-block-icon">🚿</div>
-      <div class="room-block-name">Bathroom</div>
-      <div class="room-block-sqft">200 sqft</div></div><div class="room-block" data-room-id="r1775393852392trz" data-floor="ground" style="background: rgba(58, 26, 106, 0.8); left: 1520px; top: 508px; width: 502px; height: 502px;">
-      <div class="room-anchor"></div>
-      <div class="room-block-icon">🫧</div>
-      <div class="room-block-name">Laundry</div>
-      <div class="room-block-sqft">400 sqft</div></div><div class="room-block" data-room-id="r1775393852392jc4" data-floor="ground" style="background: rgba(106, 42, 16, 0.8); left: 2px; top: 1014px; width: 502px; height: 502px;">
-      <div class="room-anchor"></div>
-      <div class="room-block-icon">🎮</div>
-      <div class="room-block-name">Kids Zone</div>
-      <div class="room-block-sqft">600 sqft</div></div></div>
+        <!-- Template picker -->
+        <div id="templateRow" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:0 0 10px;margin-bottom:2px">
+          <style>#templateRow::-webkit-scrollbar{display:none}</style>
+        </div>
+        <div class="barndo-grid" id="groundGrid"></div>
         <div class="add-hint" id="groundHint">
-          Pick a room below, then tap a cell to place it
+          Tap a room type below to place it
         </div>
       </div>
 
@@ -604,11 +581,10 @@ nav {
       <div class="floor-section" id="upperFloorSection" style="display:none">
         <div class="floor-header">
           <div class="floor-title">Upper Floor / Loft</div>
-          <div class="floor-sqft" id="upperSqftLabel">0 sqft</div>
         </div>
-        <div class="barndo-grid" id="upperGrid" style="grid-template-columns: repeat(8, 253px); grid-template-rows: repeat(6, 253px); width: 2024px; height: 1518px;"><div class="grid-cell empty" data-cell-idx="0" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="1" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="2" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="3" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="4" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="5" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="6" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="7" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="8" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="9" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="10" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="11" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="12" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="13" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="14" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="15" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="16" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="17" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="18" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="19" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="20" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="21" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="22" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="23" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="24" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="25" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="26" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="27" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="28" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="29" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="30" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="31" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="32" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="33" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="34" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="35" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="36" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="37" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="38" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="39" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="40" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="41" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="42" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="43" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="44" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="45" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="46" data-floor="upper"></div><div class="grid-cell empty" data-cell-idx="47" data-floor="upper"></div></div>
+        <div class="barndo-grid" id="upperGrid"></div>
         <div class="add-hint" id="upperHint">
-          Pick a room below, then tap a cell to place it
+          Tap a room type below to place it
         </div>
       </div>
     </div>
@@ -616,7 +592,7 @@ nav {
     <!-- Room palette -->
     <div class="room-palette" id="roomPalette">
       <div class="palette-title">Tap a room type, then tap the grid to place it</div>
-      <div class="palette-rooms" id="paletteRooms"><div class="palette-item" data-type-id="great"><div class="palette-icon">🛋</div><div class="palette-name">Great Room</div></div><div class="palette-item" data-type-id="kitchen"><div class="palette-icon">🍳</div><div class="palette-name">Kitchen</div></div><div class="palette-item" data-type-id="dining"><div class="palette-icon">🍽</div><div class="palette-name">Dining</div></div><div class="palette-item" data-type-id="entry"><div class="palette-icon">🚪</div><div class="palette-name">Entry</div></div><div class="palette-item" data-type-id="bath"><div class="palette-icon">🚿</div><div class="palette-name">Bathroom</div></div><div class="palette-item" data-type-id="bedroom"><div class="palette-icon">🛏</div><div class="palette-name">Bedroom</div></div><div class="palette-item" data-type-id="laundry"><div class="palette-icon">🫧</div><div class="palette-name">Laundry</div></div><div class="palette-item" data-type-id="kids"><div class="palette-icon">🎮</div><div class="palette-name">Kids Zone</div></div><div class="palette-item" data-type-id="office"><div class="palette-icon">💻</div><div class="palette-name">Office</div></div><div class="palette-item" data-type-id="game"><div class="palette-icon">🎱</div><div class="palette-name">Game Room</div></div><div class="palette-item" data-type-id="pantry"><div class="palette-icon">📦</div><div class="palette-name">Pantry</div></div><div class="palette-item" data-type-id="porch"><div class="palette-icon">🌿</div><div class="palette-name">Porch</div></div><div class="palette-item" data-type-id="workshop"><div class="palette-icon">🔧</div><div class="palette-name">Workshop</div></div><div class="palette-item" data-type-id="loft"><div class="palette-icon">🏠</div><div class="palette-name">Loft</div></div><div class="palette-item" data-type-id="storage"><div class="palette-icon">🗄</div><div class="palette-name">Storage</div></div></div>
+      <div class="palette-rooms" id="paletteRooms"></div>
     </div>
   </div>
 </div>
@@ -658,6 +634,7 @@ nav {
     <div class="shape-actions">
       <div class="btn-secondary" id="shapeCancel">Cancel</div>
       <div class="btn-danger" id="shapeDelete" style="display:none">Remove</div>
+      <div class="btn-move" id="shapeMove" style="display:none;padding:12px 16px;background:transparent;border:1px solid var(--gold);border-radius:8px;color:var(--gold2);font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.08em;cursor:pointer">↖ Move</div>
       <div class="btn-primary" id="shapePlace">Place Room →</div>
     </div>
   </div>
@@ -694,11 +671,9 @@ let COLS = 8;
 let ROWS = 6;
 const BASE_CELL_SIZE = Math.floor((window.innerWidth - 28) / COLS); // px at 100%
 
-// Cell size fills available width evenly across COLS
-function getCellSize() {
-  const availW = window.innerWidth - 28;
-  return Math.max(16, Math.floor(availW / COLS));
-}
+// Fixed cell size — grid grows/shrinks with COLS/ROWS, doesn't fill screen
+const FIXED_CELL_SIZE = 60;
+function getCellSize() { return FIXED_CELL_SIZE; }
 
 // State
 let state = {
@@ -712,9 +687,11 @@ let state = {
   // room: { id (uid), typeId, sqft, cells: [cellIdx,...] }
   ground: [],
   upper:  [],
-  selectedPaletteType: null, // typeId being placed
-  selectedRoomId: null,      // room being moved
-  selectedFloor: null,       // 'ground'|'upper'
+  selectedPaletteType: null,
+  selectedRoomId: null,
+  selectedFloor: null,
+  movingRoomId: null,
+  movingFloor: null,
 };
 
 // ══════════════════════════════════════
@@ -726,6 +703,10 @@ document.querySelectorAll('.ntab').forEach(tab => {
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById(tab.dataset.view).classList.add('active');
+    // Rebuild grid after tab switch so cell size uses correct visible width
+    if(tab.dataset.view === 'vLayout') {
+      requestAnimationFrame(() => renderBothGrids());
+    }
   });
 });
 
@@ -797,9 +778,10 @@ function rebuildPodInputs() {
 //  COST ENGINE
 // ══════════════════════════════════════
 function barnDoSqft() {
-  const allRooms = [...state.ground, ...state.upper];
-  if(allRooms.length === 0) return COLS * ROWS * 100; // default: full grid
-  return allRooms.reduce((a,r) => a + r.sqft, 0);
+  // Total barndo sqft = the full grid footprint (ground floor)
+  // Upper floor adds the same footprint if two-story
+  const floors = state.twoStory ? 2 : 1;
+  return COLS * ROWS * SQFT_PER_CELL * floors;
 }
 
 function calcBarndo(sqft) {
@@ -911,8 +893,7 @@ document.getElementById('twoStoryBtn').addEventListener('click', () => {
   document.getElementById('twoStoryPill').className = 'pill' + (state.twoStory?' on':'');
   document.getElementById('twoStoryBtn').className = 'two-story-btn' + (state.twoStory?' on':'');
   document.getElementById('upperFloorSection').style.display = state.twoStory ? 'block' : 'none';
-  updateLayoutBudgetBar();
-  renderOverview();
+  updateSqftLabels();
 });
 
 // Barndo scale slider
@@ -992,12 +973,10 @@ function renderPaletteSelection() {
 // ══════════════════════════════════════
 function buildGrid(gridEl, floor) {
   const CS = getCellSize();
-  const gridW = CS * COLS;
-  const gridH = CS * ROWS;
   gridEl.style.gridTemplateColumns = `repeat(${COLS}, ${CS}px)`;
   gridEl.style.gridTemplateRows    = `repeat(${ROWS}, ${CS}px)`;
-  gridEl.style.width  = gridW + 'px';
-  gridEl.style.height = gridH + 'px';
+  gridEl.style.width  = (CS * COLS) + 'px';
+  gridEl.style.height = (CS * ROWS) + 'px';
   gridEl.innerHTML = '';
 
   // Cells
@@ -1016,7 +995,7 @@ function buildGrid(gridEl, floor) {
 }
 
 function renderRoomBlock(gridEl, room, floor, CS) {
-  CS = CS || getCellSize();
+  CS = getCellSize();
   if(!room.cells || room.cells.length===0) return;
   const rt = getRoomType(room.typeId);
 
@@ -1026,11 +1005,13 @@ function renderRoomBlock(gridEl, room, floor, CS) {
   const minR = Math.min(...rows), maxR = Math.max(...rows);
   const minC = Math.min(...cols), maxC = Math.max(...cols);
 
+  const isMoving = (state.movingRoomId === room.id);
   const block = document.createElement('div');
-  block.className = 'room-block' + (state.selectedRoomId===room.id?' selected':'');
+  block.className = 'room-block' + (isMoving ? ' selected' : '');
   block.dataset.roomId = room.id;
   block.dataset.floor = floor;
   block.style.background = rt.color+'cc';
+  if(isMoving) block.style.boxShadow = '0 0 0 3px var(--gold), 0 4px 20px rgba(200,150,60,0.5)';
   block.style.left   = (minC * CS + 2) + 'px';
   block.style.top    = (minR * CS + 2) + 'px';
   block.style.width  = ((maxC-minC+1)*CS - 4) + 'px';
@@ -1088,10 +1069,9 @@ function updateLayoutBudgetBar() {
 }
 
 function updateSqftLabels() {
-  const gSqft = state.ground.reduce((a,r)=>a+r.sqft,0);
-  const uSqft = state.upper.reduce((a,r)=>a+r.sqft,0);
-  document.getElementById('groundSqftLabel').textContent = gSqft.toLocaleString()+' sqft';
-  document.getElementById('upperSqftLabel').textContent  = uSqft.toLocaleString()+' sqft';
+  const total = barnDoSqft();
+  const lbl = document.getElementById('gridSqftLabel');
+  if(lbl) lbl.textContent = total.toLocaleString();
   updateLayoutBudgetBar();
   renderOverview();
 }
@@ -1185,6 +1165,9 @@ function openShapePicker(options) {
 
   const deleteBtn = document.getElementById('shapeDelete');
   deleteBtn.style.display = sp.editingRoomId ? 'block' : 'none';
+
+  const moveBtn = document.getElementById('shapeMove');
+  moveBtn.style.display = sp.editingRoomId ? 'block' : 'none';
 
   const placeBtn = document.getElementById('shapePlace');
   placeBtn.textContent = sp.editingRoomId ? 'Update Room' : 'Place Room →';
@@ -1380,6 +1363,17 @@ document.getElementById('shapeDelete').addEventListener('click', () => {
   renderBothGrids();
 });
 
+// Move button — enter move mode and close picker
+document.getElementById('shapeMove').addEventListener('click', () => {
+  if(!sp.editingRoomId) return;
+  state.movingRoomId = sp.editingRoomId;
+  state.movingFloor  = sp.editingFloor;
+  closeShapePicker();
+  document.getElementById('groundHint').textContent = '↖ Tap anywhere to move this room';
+  document.getElementById('upperHint').textContent  = '↖ Tap anywhere to move this room';
+  renderBothGrids();
+});
+
 document.getElementById('shapeClose').addEventListener('click', closeShapePicker);
 document.getElementById('shapeCancel').addEventListener('click', closeShapePicker);
 document.getElementById('shapeOverlay').addEventListener('click', e => {
@@ -1387,10 +1381,10 @@ document.getElementById('shapeOverlay').addEventListener('click', e => {
 });
 
 // ══════════════════════════════════════
-//  UPDATED INTERACTION
+//  INTERACTION
 // ══════════════════════════════════════
 function onCellClick(cellIdx, floor) {
-  // CASE 1: Pending shape to place
+  // CASE 1: Pending shape placement
   if(state.pendingOffsets) {
     const cells = offsetsToFloorCells(cellIdx, state.pendingOffsets);
     const room = {
@@ -1402,45 +1396,43 @@ function onCellClick(cellIdx, floor) {
     state[floor].push(room);
     state.pendingOffsets = null;
     state.pendingTypeId  = null;
-    // Reset hints
-    document.getElementById('groundHint').textContent = 'Pick a room below, then tap a cell to place it';
-    document.getElementById('upperHint').textContent  = 'Pick a room below, then tap a cell to place it';
+    document.getElementById('groundHint').textContent = 'Tap a room type below to place it';
+    document.getElementById('upperHint').textContent  = 'Tap a room type below to place it';
     renderBothGrids();
     return;
   }
 
-  // CASE 2: Room selected for moving
-  if(state.selectedRoomId !== null) {
+  // CASE 2: Move mode — drop the moving room here
+  if(state.movingRoomId !== null) {
     moveRoom(cellIdx, floor);
     return;
   }
 }
 
 function onRoomClick(roomId, floor) {
-  // If pending shape — ignore room taps
   if(state.pendingOffsets) return;
 
-  if(state.selectedRoomId === roomId) {
-    // Tap selected room again → open shape picker to edit
-    const room = state[floor].find(r=>r.id===roomId);
-    if(room) openShapePicker({ typeId:room.typeId, editingRoomId:roomId, editingFloor:floor });
-    state.selectedRoomId = null;
-    state.selectedFloor  = null;
-    renderBothGrids();
-  } else {
-    state.selectedRoomId = roomId;
-    state.selectedFloor  = floor;
-    renderBothGrids();
+  // In move mode — tapping a room cancels move
+  if(state.movingRoomId !== null) {
+    if(state.movingRoomId === roomId) {
+      state.movingRoomId = null;
+      state.movingFloor  = null;
+      renderBothGrids();
+    }
+    return;
   }
+
+  // Single tap → open edit shape picker immediately
+  const room = state[floor].find(r=>r.id===roomId);
+  if(room) openShapePicker({ typeId:room.typeId, editingRoomId:roomId, editingFloor:floor });
 }
 
 function moveRoom(targetCell, targetFloor) {
-  const roomId  = state.selectedRoomId;
-  const srcFloor= state.selectedFloor;
+  const roomId  = state.movingRoomId;
+  const srcFloor= state.movingFloor;
   const room    = state[srcFloor].find(r=>r.id===roomId);
-  if(!room) { clearSelection(); return; }
+  if(!room) { state.movingRoomId=null; state.movingFloor=null; return; }
 
-  // Preserve shape offsets, re-anchor at targetCell
   const rows = room.cells.map(c=>Math.floor(c/COLS));
   const cols = room.cells.map(c=>c%COLS);
   const minR = Math.min(...rows), minC = Math.min(...cols);
@@ -1450,13 +1442,14 @@ function moveRoom(targetCell, targetFloor) {
   state[srcFloor] = state[srcFloor].filter(r=>r.id!==roomId);
   room.cells = newCells;
   state[targetFloor].push(room);
-  clearSelection();
+  state.movingRoomId = null;
+  state.movingFloor  = null;
   renderBothGrids();
 }
 
 function clearSelection() {
-  state.selectedRoomId = null;
-  state.selectedFloor  = null;
+  state.movingRoomId   = null;
+  state.movingFloor    = null;
   state.pendingOffsets = null;
   state.pendingTypeId  = null;
   renderPaletteSelection();
@@ -1467,6 +1460,195 @@ function selectPaletteType(typeId) {
   state.selectedRoomId = null;
   state.selectedFloor  = null;
   openShapePicker({ typeId, pendingFloor:'ground' });
+}
+
+// ══════════════════════════════════════
+//  LAYOUT TEMPLATES
+// ══════════════════════════════════════
+// Each room: { typeId, w (cols wide), h (rows tall), r (row), c (col) }
+// Designed on an 8×6 grid. applyTemplate scales to current COLS/ROWS.
+const TEMPLATES = [
+  {
+    name: '🏡 Classic',
+    cols: 8, rows: 6,
+    rooms: [
+      { typeId:'entry',   r:0, c:0, w:8, h:1 },
+      { typeId:'great',   r:1, c:0, w:4, h:3 },
+      { typeId:'kitchen', r:1, c:4, w:4, h:2 },
+      { typeId:'dining',  r:3, c:4, w:4, h:1 },
+      { typeId:'kids',    r:4, c:0, w:3, h:2 },
+      { typeId:'bath',    r:4, c:3, w:2, h:1 },
+      { typeId:'laundry', r:5, c:3, w:2, h:1 },
+      { typeId:'storage', r:4, c:5, w:3, h:2 },
+    ]
+  },
+  {
+    name: '🍳 Open Kitchen',
+    cols: 8, rows: 6,
+    rooms: [
+      { typeId:'entry',   r:0, c:0, w:2, h:1 },
+      { typeId:'porch',   r:0, c:2, w:6, h:1 },
+      { typeId:'great',   r:1, c:0, w:5, h:3 },
+      { typeId:'kitchen', r:1, c:5, w:3, h:2 },
+      { typeId:'dining',  r:3, c:5, w:3, h:1 },
+      { typeId:'bath',    r:4, c:0, w:2, h:2 },
+      { typeId:'bath',    r:4, c:2, w:2, h:2 },
+      { typeId:'laundry', r:4, c:4, w:4, h:2 },
+    ]
+  },
+  {
+    name: '👨‍👩‍👧‍👦 Family First',
+    cols: 8, rows: 6,
+    rooms: [
+      { typeId:'entry',   r:0, c:0, w:2, h:1 },
+      { typeId:'great',   r:0, c:2, w:6, h:2 },
+      { typeId:'kitchen', r:2, c:0, w:3, h:2 },
+      { typeId:'kids',    r:2, c:3, w:5, h:2 },
+      { typeId:'bedroom', r:4, c:0, w:2, h:2 },
+      { typeId:'bedroom', r:4, c:2, w:2, h:2 },
+      { typeId:'bedroom', r:4, c:4, w:2, h:2 },
+      { typeId:'bath',    r:4, c:6, w:1, h:1 },
+      { typeId:'laundry', r:5, c:6, w:2, h:1 },
+    ]
+  },
+  {
+    name: '🔧 Shop + Live',
+    cols: 8, rows: 6,
+    rooms: [
+      { typeId:'workshop', r:0, c:0, w:3, h:6 },
+      { typeId:'entry',    r:0, c:3, w:5, h:1 },
+      { typeId:'great',    r:1, c:3, w:5, h:2 },
+      { typeId:'kitchen',  r:3, c:3, w:3, h:2 },
+      { typeId:'bath',     r:3, c:6, w:2, h:1 },
+      { typeId:'laundry',  r:4, c:6, w:2, h:1 },
+      { typeId:'storage',  r:5, c:3, w:5, h:1 },
+    ]
+  },
+  {
+    name: '🌿 Porch Life',
+    cols: 8, rows: 6,
+    rooms: [
+      { typeId:'porch',   r:0, c:0, w:8, h:2 },
+      { typeId:'entry',   r:2, c:0, w:2, h:1 },
+      { typeId:'great',   r:2, c:2, w:4, h:2 },
+      { typeId:'kitchen', r:2, c:6, w:2, h:2 },
+      { typeId:'dining',  r:4, c:0, w:3, h:2 },
+      { typeId:'bath',    r:4, c:3, w:2, h:1 },
+      { typeId:'laundry', r:5, c:3, w:2, h:1 },
+      { typeId:'kids',    r:4, c:5, w:3, h:2 },
+    ]
+  },
+  {
+    name: '🎮 Game + Loft',
+    cols: 8, rows: 6,
+    rooms: [
+      { typeId:'entry',   r:0, c:0, w:2, h:1 },
+      { typeId:'great',   r:0, c:2, w:4, h:2 },
+      { typeId:'loft',    r:0, c:6, w:2, h:2 },
+      { typeId:'kitchen', r:2, c:0, w:3, h:2 },
+      { typeId:'game',    r:2, c:3, w:5, h:2 },
+      { typeId:'bath',    r:4, c:0, w:2, h:2 },
+      { typeId:'laundry', r:4, c:2, w:2, h:2 },
+      { typeId:'storage', r:4, c:4, w:4, h:2 },
+    ]
+  },
+  {
+    name: '🛏 Bed Heavy',
+    cols: 8, rows: 6,
+    rooms: [
+      { typeId:'entry',   r:0, c:0, w:2, h:1 },
+      { typeId:'great',   r:0, c:2, w:3, h:2 },
+      { typeId:'kitchen', r:0, c:5, w:3, h:2 },
+      { typeId:'bedroom', r:2, c:0, w:2, h:2 },
+      { typeId:'bedroom', r:2, c:2, w:2, h:2 },
+      { typeId:'bedroom', r:2, c:4, w:2, h:2 },
+      { typeId:'bedroom', r:2, c:6, w:2, h:2 },
+      { typeId:'bath',    r:4, c:0, w:2, h:2 },
+      { typeId:'bath',    r:4, c:2, w:2, h:2 },
+      { typeId:'laundry', r:4, c:4, w:4, h:2 },
+    ]
+  },
+  {
+    name: '🍽 Dining Focus',
+    cols: 8, rows: 6,
+    rooms: [
+      { typeId:'entry',   r:0, c:0, w:8, h:1 },
+      { typeId:'dining',  r:1, c:0, w:4, h:2 },
+      { typeId:'kitchen', r:1, c:4, w:4, h:2 },
+      { typeId:'great',   r:3, c:0, w:5, h:3 },
+      { typeId:'bath',    r:3, c:5, w:2, h:2 },
+      { typeId:'laundry', r:5, c:5, w:3, h:1 },
+      { typeId:'pantry',  r:3, c:7, w:1, h:2 },
+    ]
+  },
+];
+
+function buildTemplateRow() {
+  const row = document.getElementById('templateRow');
+  if(!row) return;
+  row.innerHTML = '';
+  TEMPLATES.forEach((tmpl, i) => {
+    const chip = document.createElement('div');
+    chip.style.cssText = `
+      flex-shrink:0; background:var(--surf2); border:1px solid var(--border);
+      border-radius:20px; padding:6px 14px; cursor:pointer;
+      font-family:'DM Mono',monospace; font-size:10px;
+      color:var(--text2); white-space:nowrap; transition:border-color .15s, color .15s;
+      user-select:none; -webkit-user-select:none;
+    `;
+    chip.textContent = tmpl.name;
+    chip.addEventListener('pointerdown', () => {
+      chip.style.borderColor = 'var(--gold)';
+      chip.style.color = 'var(--gold2)';
+    });
+    chip.addEventListener('pointerup', () => {
+      chip.style.borderColor = '';
+      chip.style.color = '';
+      applyTemplate(i);
+    });
+    row.appendChild(chip);
+  });
+}
+
+function applyTemplate(idx) {
+  const tmpl = TEMPLATES[idx];
+  state.ground = [];
+  state.upper  = [];
+  state.movingRoomId   = null;
+  state.movingFloor    = null;
+  state.pendingOffsets = null;
+  state.pendingTypeId  = null;
+
+  // Scale factor: template was designed for tmpl.cols × tmpl.rows
+  // Map room r/c/w/h proportionally to current COLS/ROWS
+  const scaleC = COLS / tmpl.cols;
+  const scaleR = ROWS / tmpl.rows;
+
+  tmpl.rooms.forEach(def => {
+    // Scale coordinates to current grid, clamp to grid bounds
+    const col = Math.round(def.c * scaleC);
+    const row = Math.round(def.r * scaleR);
+    const w   = Math.max(1, Math.round(def.w * scaleC));
+    const h   = Math.max(1, Math.round(def.h * scaleR));
+
+    // Build cells list — clamp to grid
+    const cells = [];
+    for(let rr = row; rr < Math.min(row + h, ROWS); rr++) {
+      for(let cc = col; cc < Math.min(col + w, COLS); cc++) {
+        cells.push(rr * COLS + cc);
+      }
+    }
+    if(cells.length === 0) return;
+
+    state.ground.push({
+      id: 'r' + Date.now() + Math.random().toString(36).slice(2,6),
+      typeId: def.typeId,
+      sqft:   cells.length * SQFT_PER_CELL,
+      cells,
+    });
+  });
+
+  renderBothGrids();
 }
 
 // ══════════════════════════════════════
@@ -1490,32 +1672,10 @@ function init() {
 
   rebuildPodInputs();
   buildPalette();
-  renderBothGrids();
+  buildTemplateRow();
+  // Pre-select Classic template
+  applyTemplate(0);
   renderOverview();
-
-  // Pre-place default rooms using shape system
-  const defaults = [
-    { typeId:'entry',   preset:'2x1', anchor:0  },
-    { typeId:'great',   preset:'3x3', anchor:8  },
-    { typeId:'kitchen', preset:'2x3', anchor:13 },
-    { typeId:'bath',    preset:'1x2', anchor:20 },
-    { typeId:'laundry', preset:'2x2', anchor:22 },
-    { typeId:'kids',    preset:'3x2', anchor:32 },
-  ];
-  defaults.forEach(d => {
-    applyPreset(d.preset);
-    const offsets = shapeToOffsets();
-    const cells = offsetsToFloorCells(d.anchor, offsets);
-    const rt = getRoomType(d.typeId);
-    state.ground.push({
-      id: 'r'+Date.now()+Math.random().toString(36).slice(2,5),
-      typeId: d.typeId,
-      sqft: offsets.length * SQFT_PER_CELL,
-      cells,
-    });
-    sp.filledCells = new Set();
-  });
-  renderBothGrids();
 }
 
 init();
@@ -1531,7 +1691,7 @@ init();
     width:100%; padding:14px; pointer-events:auto;
     background:linear-gradient(135deg, #c8963c, #e8b84a);
     border:none; border-radius:12px; cursor:pointer;
-    font-family:&#39;DM Mono&#39;,monospace; font-size:24px;
+    font-family:'DM Mono',monospace; font-size:24px;
     font-weight:500; letter-spacing:0.12em; text-transform:uppercase;
     color:#0f0e0b; display:flex; align-items:center; justify-content:center; gap:8px;
     box-shadow: 0 4px 20px rgba(200,150,60,0.4), 0 2px 8px rgba(0,0,0,0.4);
@@ -1803,6 +1963,5 @@ function renderFloorToCanvas(rooms, title) {
   return c.toDataURL('image/png');
 }
 </script>
-
-
-</body></html>
+</body>
+</html>
