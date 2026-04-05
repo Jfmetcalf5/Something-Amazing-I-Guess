@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Family Compound Planner</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  /* ── LIGHT MODE (DEFAULT) ── */
+  --bg:     #f4f3ef; 
+  --surf:   #ffffff;
+  --surf2:  #f9f8f5;
+  --border: #e0dcd3;
+  --gold:   #c8963c;
+  --gold2:  #b37f26; 
+  --cream:  #1a1608; 
+  --green:  #4a8a5a;
+  --green2: #387046; 
+  --red:    #c04a2a;
+  --red2:   #a8381a;
+  --blue:   #3a6a9a;
+  --blue2:  #285482;
+  --text:   #2e2a1e;
+  --text2:  #6b6455;
+  --text3:  #948d7d;
+
+  /* Semantic UI Backgrounds */
+  --hero-bg: linear-gradient(150deg, #eae5d9 0%, #f4f3ef 70%);
+  --hi-bg:   #fcf8ec;
+  --good-bg: #ebf2ed;
+  --bad-bg:  #f5e9e6;
+  --grid-border: #e8e4db;
+  --badge-v-bg: #fcf8ec;
+  --badge-f-bg: #ebf2ed;
+  --badge-s-bg: #eef2f7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* ── DARK MODE (SYSTEM MATCH) ── */
+    --bg:     #0f0e0b;
+    --surf:   #181610;
+    --surf2:  #201e16;
+    --border: #2e2a1e;
+    --gold:   #c8963c;
+    --gold2:  #e8b84a;
+    --cream:  #f0e8d0;
+    --green:  #4a8a5a;
+    --green2: #6aba7a;
+    --red:    #c04a2a;
+    --red2:   #e06a4a;
+    --blue:   #3a6a9a;
+    --blue2:  #6aaad0;
+    --text:   #e8dfc8;
+    --text2:  #9a9080;
+    --text3:  #5a5448;
+
+    /* Semantic UI Backgrounds */
+    --hero-bg: linear-gradient(150deg, #1a1608 0%, #0f0e0b 70%);
+    --hi-bg:   #201a08;
+    --good-bg: #0e1e10;
+    --bad-bg:  #1e0e08;
+    --grid-border: #3a3428;
+    --badge-v-bg: #2a1a06;
+    --badge-f-bg: #0e2014;
+    --badge-s-bg: #1a1a2a;
+  }
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; overflow:hidden; }
+body {
+  background:var(--bg); color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  display:flex; flex-direction:column; height:100%;
+}
+
+/* ── NAV ── */
+nav {
+  display:flex; flex-shrink:0;
+  background:var(--surf); border-bottom:1px solid var(--border);
+}
+.ntab {
+  flex:1; padding:13px 0; text-align:center;
+  font-family:'DM Mono',monospace; font-size:10px;
+  letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--text3); cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:color .15s,border-color .15s; user-select:none;
+}
+.ntab.active { color:var(--gold2); border-bottom-color:var(--gold); }
+
+/* ── VIEWS ── */
+.view { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; display:none; flex-direction:column; }
+.view.active { display:flex; }
+#vLayout { overflow:hidden; }
+
+/* ── SHARED ── */
+.section { padding:16px; border-bottom:1px solid var(--border); }
+.section-title {
+  font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--gold); margin-bottom:12px;
+  display:flex; align-items:center; gap:8px;
+}
+.section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── OVERVIEW ── */
+.hero {
+  padding:22px 16px 18px;
+  background:var(--hero-bg);
+  border-bottom:1px solid var(--border);
+}
+.hero-sub { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
+.hero-title { font-family:'Playfair Display',serif; font-size:28px; font-weight:900; color:var(--cream); line-height:1.1; }
+.hero-title em { font-style:italic; color:var(--gold2); }
+
+/* EDITABLE FIELD */
+.field-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 0; border-bottom:1px solid var(--border);
+}
+.field-row:last-child { border-bottom:none; }
+.field-label { font-size:13px; color:var(--text2); flex:1; }
+.field-input {
+  background:var(--surf2); border:1px solid var(--border);
+  border-radius:6px; padding:7px 10px;
+  font-family:'DM Mono',monospace; font-size:13px;
+  color:var(--gold2); text-align:right; width:130px;
+  transition:border-color .15s;
+}
+.field-input:focus { outline:none; border-color:var(--gold); }
+
+/* TOGGLE */
+.toggle-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 0; border-bottom:1px solid var(--border);
+}
+.toggle-row:last-child { border-bottom:none; }
+.toggle-left { flex:1; }
+.toggle-label { font-size:13px; color:var(--text); margin-bottom:2px; }
+.toggle-note { font-family:'DM Mono',monospace; font-size:8px; color:var(--text3); }
+.pill {
+  width:44px; height:26px; border-radius:13px;
+  background:var(--border); position:relative;
+  flex-shrink:0; cursor:pointer; transition:background .2s;
+}
+.pill.on { background:var(--gold); }
+.pill::after {
+  content:''; position:absolute;
+  width:20px; height:20px; border-radius:50%;
+  background:white; top:3px; left:3px;
+  transition:transform .2s; box-shadow:0 1px 4px rgba(0,0,0,.4);
+}
+.pill.on::after { transform:translateX(18px); }
+
+/* POD SQFT INPUT */
+.pod-sqft-row {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 0; border-bottom:1px solid var(--border);
+}
+.pod-sqft-row:last-child { border-bottom:none; }
+.pod-sqft-label { font-size:12px; color:var(--text2); flex:1; }
+.pod-sqft-input {
+  background:var(--surf2); border:1px solid var(--border);
+  border-radius:5px; padding:5px 8px;
+  font-family:'DM Mono',monospace; font-size:12px;
+  color:var(--gold2); text-align:right; width:90px;
+}
+.pod-sqft-input:focus { outline:none; border-color:var(--gold); }
+
+/* COST SUMMARY CARDS */
+.cost-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.cost-card {
+  background:var(--surf2); border:1px solid var(--border);
+  border-radius:8px; padding:12px;
+}
+.cost-card.hi { border-color:var(--gold); background:var(--hi-bg); }
+.cost-card.good { border-color:var(--green); background:var(--good-bg); }
+.cost-card.bad { border-color:var(--red); background:var(--bad-bg); }
+.cost-card.wide { grid-column:1/-1; }
+.cc-val { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--gold2); line-height:1; }
+.cost-card.good .cc-val { color:var(--green2); }
+.cost-card.bad .cc-val { color:var(--red2); }
+.cc-lbl { font-family:'DM Mono',monospace; font-size:7px; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; margin-top:3px; }
+
+/* BREAKDOWN ROWS */
+.brow {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 0; border-bottom:1px solid var(--border); font-size:12px;
+}
+.brow:last-child { border-bottom:none; }
+.brow-lbl { color:var(--text2); display:flex; align-items:center; gap:6px; }
+.brow-val { font-family:'DM Mono',monospace; color:var(--gold2); font-size:11px; }
+.badge {
+  display:inline-block; padding:1px 5px; border-radius:3px;
+  font-family:'DM Mono',monospace; font-size:6px; letter-spacing:.06em;
+  white-space:nowrap;
+}
+.bv { background:var(--badge-v-bg); border:1px solid var(--gold); color:var(--gold2); }
+.bf { background:var(--badge-f-bg); border:1px solid var(--green); color:var(--green2); }
+.bs { background:var(--badge-s-bg); border:1px solid var(--blue); color:var(--blue2); }
+.bw { background:var(--bad-bg); border:1px solid var(--red); color:var(--red2); }
+
+/* BUDGET BAR */
+.bbar-wrap { padding:14px 16px; }
+.bbar-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+.bbar-lbl { font-family:'DM Mono',monospace; font-size:8px; color:var(--text3); text-transform:uppercase; letter-spacing:.1em; }
+.bbar-remain { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; }
+.bbar-track { height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+.bbar-fill { height:100%; border-radius:3px; transition:width .3s,background .3s; }
+.bbar-sub { display:flex; justify-content:space-between; font-family:'DM Mono',monospace; font-size:7px; color:var(--text3); margin-top:4px; }
+
+/* ── LAYOUT VIEW ── */
+.layout-view-inner {
+  flex:1; display:flex; flex-direction:column; overflow:hidden;
+}
+
+/* Controls bar */
+.layout-controls {
+  flex-shrink:0; padding:10px 14px;
+  background:var(--surf); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+
+.two-story-btn {
+  display:flex; align-items:center; gap:7px;
+  background:var(--surf2); border:1px solid var(--border);
+  border-radius:6px; padding:6px 10px; cursor:pointer;
+  transition:border-color .15s; user-select:none; flex-shrink:0;
+}
+.two-story-btn.on { border-color:var(--gold); background:var(--hi-bg); }
+.two-story-btn-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--text2); }
+.two-story-btn.on .two-story-btn-label { color:var(--gold2); }
+
+/* Floor area */
+.floors-area {
+  flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:10px 14px 80px;
+}
+
+.floor-section { margin-bottom:14px; }
+.floor-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px;
+}
+.floor-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+.floor-sqft { font-family:'DM Mono',monospace; font-size:9px; color:var(--text3); }
+
+/* THE GRID */
+.barndo-grid {
+  background:var(--surf2); border:2px solid var(--gold);
+  border-radius:6px; overflow:hidden; position:relative;
+  display:grid; user-select:none; touch-action:none;
+}
+
+.grid-cell {
+  border:1px solid var(--grid-border);
+  position:relative;
+  cursor:pointer; transition:background .1s;
+  display:flex; align-items:center; justify-content:center;
+  box-sizing:border-box;
+}
+.grid-cell.empty:active { background:var(--border); }
+.grid-cell.selected-dest { background:#c8963c22; border-color:var(--gold); }
+
+/* Room block spanning multiple cells */
+.room-block {
+  position:absolute; border-radius:4px; display:flex;
+  flex-direction:column; align-items:center; justify-content:center;
+  gap:2px; cursor:pointer; transition:opacity .1s, transform .1s;
+  z-index:2; box-sizing:border-box;
+  border:2px solid transparent;
+}
+.room-block.selected {
+  border-color:white; transform:scale(0.97);
+  box-shadow:0 0 0 3px var(--gold), 0 4px 16px rgba(0,0,0,.5);
+  z-index:10;
+}
+.room-block-icon { font-size:14px; line-height:1; }
+.room-block-name { font-family:'DM Mono',monospace; font-size:7px; letter-spacing:.04em; text-transform:uppercase; color:white; opacity:.9; text-align:center; padding:0 4px; line-height:1.2; }
+.room-block-sqft { font-family:'DM Mono',monospace; font-size:7px; color:rgba(255,255,255,.6); }
+
+/* Top-left anchor triangle */
+.room-anchor {
+  position: absolute;
+  top: 0; left: 0;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 14px 14px 0 0;
+  border-color: rgba(255,255,255,0.6) transparent transparent transparent;
+  z-index: 3;
+}
+
+/* VALID DROP INDICATOR */
+.grid-cell.drop-target { background:#c8963c33 !important; border-color:var(--gold) !important; }
+.grid-cell.drop-invalid { background:#c04a2a22 !important; }
+
+/* ROOM PALETTE */
+.room-palette {
+  position:fixed; bottom:0; left:0; right:0;
+  background:var(--surf); border-top:1px solid var(--border);
+  padding:8px 14px 12px; z-index:50;
+}
+.palette-title { font-family:'DM Mono',monospace; font-size:8px; color:var(--text3); text-transform:uppercase; letter-spacing:.1em; margin-bottom:6px; }
+.palette-rooms { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+.palette-rooms::-webkit-scrollbar { display:none; }
+.palette-item {
+  flex-shrink:0; background:var(--surf2); border:1px solid var(--border);
+  border-radius:6px; padding:6px 8px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  transition:border-color .1s; min-width:52px;
+}
+.palette-item:active { border-color:var(--gold); }
+.palette-item.selected-from-palette { border-color:var(--gold2); background:var(--hi-bg); }
+.palette-icon { font-size:16px; }
+.palette-name { font-family:'DM Mono',monospace; font-size:7px; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+
+/* SHAPE PICKER MODAL */
+.shape-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.82);
+  z-index:200; display:none; align-items:flex-end; justify-content:center;
+}
+.shape-overlay.show { display:flex; }
+.shape-sheet {
+  background:var(--surf); border-top:1px solid var(--gold);
+  border-radius:20px 20px 0 0; padding:18px 16px 32px;
+  width:100%; max-width:420px;
+  box-shadow:0 -8px 40px rgba(0,0,0,.6);
+  animation: slideUp .22s ease;
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+.shape-header {
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;
+}
+.shape-title {
+  font-family:'Playfair Display',serif; font-size:18px;
+  font-weight:700; color:var(--cream);
+  display:flex; align-items:center; gap:8px;
+}
+.shape-close {
+  width:30px; height:30px; border-radius:50%;
+  background:var(--surf2); border:1px solid var(--border);
+  color:var(--text2); font-size:14px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+
+.shape-instruction {
+  font-family:'DM Mono',monospace; font-size:9px;
+  color:var(--text3); letter-spacing:.08em; margin-bottom:12px;
+}
+
+/* TYPE ROW */
+.shape-type-row {
+  display:flex; gap:5px; overflow-x:auto; scrollbar-width:none;
+  margin-bottom:14px; padding-bottom:2px;
+}
+.shape-type-row::-webkit-scrollbar { display:none; }
+.stype-btn {
+  flex-shrink:0; background:var(--surf2); border:1px solid var(--border);
+  border-radius:6px; padding:5px 8px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  transition:border-color .1s; min-width:46px;
+}
+.stype-btn.active { border-color:var(--gold); background:var(--hi-bg); }
+.stype-btn .si { font-size:14px; }
+.stype-btn .sl { font-family:'DM Mono',monospace; font-size:6px; color:var(--text3); text-align:center; }
+
+/* SHAPE GRID */
+.shape-grid-wrap {
+  display:flex; flex-direction:column; align-items:center; margin-bottom:14px;
+}
+.shape-grid {
+  display:grid; gap:3px; touch-action:none;
+}
+.shape-cell {
+  width:40px; height:40px; border-radius:5px;
+  background:var(--surf2); border:2px solid var(--border);
+  cursor:pointer; transition:background .08s, border-color .08s;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px;
+}
+.shape-cell.filled { border-color:var(--gold2); }
+.shape-cell.anchor { border-color:white; }
+
+/* quick preset chips */
+.shape-presets {
+  display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px;
+}
+.preset-chip {
+  background:var(--surf2); border:1px solid var(--border);
+  border-radius:4px; padding:4px 8px; cursor:pointer;
+  font-family:'DM Mono',monospace; font-size:8px; color:var(--text3);
+  letter-spacing:.05em; transition:border-color .1s;
+}
+.preset-chip:active { border-color:var(--gold); color:var(--gold2); }
+
+.shape-meta {
+  font-family:'DM Mono',monospace; font-size:9px;
+  color:var(--text3); text-align:center; margin-bottom:12px; letter-spacing:.06em;
+}
+.shape-meta span { color:var(--gold2); }
+
+.shape-actions { display:flex; gap:8px; }
+.btn-primary {
+  flex:1; padding:12px; background:var(--gold); border:none;
+  border-radius:8px; color:var(--bg); font-family:'DM Mono',monospace;
+  font-size:11px; font-weight:500; letter-spacing:.08em; text-transform:uppercase;
+  cursor:pointer;
+}
+.btn-secondary {
+  padding:12px 16px; background:transparent; border:1px solid var(--border);
+  border-radius:8px; color:var(--text2); font-family:'DM Mono',monospace;
+  font-size:11px; letter-spacing:.08em; cursor:pointer;
+}
+.btn-danger {
+  padding:12px 16px; background:transparent; border:1px solid var(--red);
+  border-radius:8px; color:var(--red2); font-family:'DM Mono',monospace;
+  font-size:11px; letter-spacing:.08em; cursor:pointer;
+}
+
+/* Add room instructions */
+.add-hint {
+  text-align:center; padding:16px;
+  font-family:'DM Mono',monospace; font-size:10px;
+  color:var(--text3); letter-spacing:.08em; line-height:1.8;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="ntab active" data-view="vOverview">🏡 Overview</div>
+  <div class="ntab" data-view="vLayout">📐 Floor Plan</div>
+</nav>
+
+<div class="view active" id="vOverview">
+  <div class="hero">
+    <div class="hero-sub">Family Compound Planner</div>
+    <div class="hero-title">The <em>Debt-Free</em> Family Plan</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Your Numbers</div>
+    <div class="field-row">
+      <div class="field-label">Total Budget</div>
+      <input class="field-input" id="fBudget" type="text" inputmode="numeric" value="$1,100,000">
+    </div>
+    <div class="field-row">
+      <div class="field-label">Land Price</div>
+      <input class="field-input" id="fLand" type="text" inputmode="numeric" value="$749,000">
+    </div>
+    <div class="field-row">
+      <div class="field-label">Number of Families</div>
+      <input class="field-input" id="fFamilies" type="text" inputmode="numeric" value="4">
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Private Family Pods</div>
+    <div class="toggle-row">
+      <div class="toggle-left">
+        <div class="toggle-label">Include Granny Pods</div>
+        <div class="toggle-note">Each family gets their own prefab home on the land</div>
+      </div>
+      <div class="pill on" id="podToggle"></div>
+    </div>
+    <div id="podFields">
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Size per pod (sqft)</div>
+      <div id="podInputs"></div>
+      <div style="margin-top:8px;font-family:'DM Mono',monospace;font-size:8px;color:var(--text3)">Est. cost per pod: <span id="podCostEach" style="color:var(--gold2)">$82,000</span> all-in · <span id="podCostTotal" style="color:var(--gold2)">$328,000</span> total</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Cost Summary</div>
+    <div class="cost-grid" id="costGrid">
+      <div class="cost-card">
+        <div class="cc-val" id="sumLand">$749K</div>
+        <div class="cc-lbl">Land</div>
+      </div>
+      <div class="cost-card">
+        <div class="cc-val" id="sumPods">$328K</div>
+        <div class="cc-lbl">Family Pods</div>
+      </div>
+      <div class="cost-card hi">
+        <div class="cc-val" id="sumBarndo">$225K</div>
+        <div class="cc-lbl">Community Barndo (est.)</div>
+      </div>
+      <div class="cost-card">
+        <div class="cc-val" id="sumTotal">$1.30M</div>
+        <div class="cc-lbl">Total Needed</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Barndo Cost Breakdown</div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Concrete Slab</span><span class="brow-val" id="bSlab">$19K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Steel Shell + Erection</span><span class="brow-val" id="bShell">$45K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Interior Framing (DIY)</span><span class="brow-val" id="bFrame">$15K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Electrical</span><span class="brow-val" id="bElec">$20K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Plumbing</span><span class="brow-val" id="bPlumb">$25K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bs">SEMI</span>HVAC</span><span class="brow-val" id="bHvac">$15K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bv">VAR</span>Insulation + Drywall</span><span class="brow-val" id="bDrywall">$18K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bs">SEMI</span>Kitchen Buildout</span><span class="brow-val" id="bKitch">$25K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bs">SEMI</span>Windows + Doors</span><span class="brow-val" id="bWin">$12K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bs">SEMI</span>Laundry (4 sets)</span><span class="brow-val" id="bLaundry">$11K</span></div>
+    <div class="brow" id="bTwoStoryRow" style="display:none"><span class="brow-lbl"><span class="badge bs">2-FL</span>Two-Story Premium</span><span class="brow-val" id="bTwoStory">$23K</span></div>
+    <div class="brow"><span class="brow-lbl"><span class="badge bf">AUTO</span>Contingency (10%)</span><span class="brow-val" id="bConting">$21K</span></div>
+    <div class="brow" style="border-top:1px solid var(--gold);margin-top:4px;padding-top:10px">
+      <span style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--cream)">Total Build</span>
+      <span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold2)" id="bTotal">$225K</span>
+    </div>
+  </div>
+
+  <div class="bbar-wrap">
+    <div class="bbar-top">
+      <span class="bbar-lbl">Budget remaining</span>
+      <span class="bbar-remain" id="bbarRemain">—</span>
+    </div>
+    <div class="bbar-track"><div class="bbar-fill" id="bbarFill" style="width:0%"></div></div>
+    <div class="bbar-sub"><span id="bbarLeft">—</span><span id="bbarPct">—</span></div>
+  </div>
+
+  <div style="margin:0 16px 16px;background:var(--good-bg);border:1px solid var(--green);border-radius:10px;padding:14px;text-align:center">
+    <div style="font-size:22px;margin-bottom:4px">✅</div>
+    <div style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--green2);margin-bottom:4px">Debt Free After Phase 1 + 2</div>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--green);line-height:1.6">Land owned outright · Pods placed · Everyone has a home<br>Barndo built on your own terms — finance or pay-as-you-go</div>
+  </div>
+
+  <div style="height:20px"></div>
+</div>
+
+<div class="view" id="vLayout">
+  <div class="layout-view-inner">
+    <div class="layout-controls">
+      <div class="two-story-btn" id="twoStoryBtn">
+        <span style="font-size:14px">🏠</span>
+        <span class="two-story-btn-label">Two-Story</span>
+        <div class="pill" id="twoStoryPill" style="width:34px;height:20px;border-radius:10px">
+          <style>#twoStoryPill::after{width:14px;height:14px;top:3px;left:3px}</style>
+        </div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--text3);letter-spacing:.08em">
+        Place rooms below · costs update live
+      </div>
+
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+        <span style="font-family:'DM Mono',monospace;font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Grid</span>
+        <div style="display:flex;align-items:center;background:var(--surf2);border:1px solid var(--border);border-radius:6px;overflow:hidden">
+          <div class="counter-btn" id="colsMinus" style="width:26px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--gold2);cursor:pointer;user-select:none">−</div>
+          <span id="colsVal" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text);width:18px;text-align:center">8</span>
+          <div class="counter-btn" id="colsPlus" style="width:26px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--gold2);cursor:pointer;user-select:none">+</div>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">×</span>
+        <div style="display:flex;align-items:center;background:var(--surf2);border:1px solid var(--border);border-radius:6px;overflow:hidden">
+          <div class="counter-btn" id="rowsMinus" style="width:26px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--gold2);cursor:pointer;user-select:none">−</div>
+          <span id="rowsVal" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text);width:18px;text-align:center">6</span>
+          <div class="counter-btn" id="rowsPlus" style="width:26px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--gold2);cursor:pointer;user-select:none">+</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="layoutBudgetBar" style="flex-shrink:0;padding:8px 14px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+      <div style="flex:1">
+        <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px">
+          <div id="lbFill" style="height:100%;border-radius:3px;transition:width .3s,background .3s;width:0%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span id="lbLabel" style="font-family:'DM Mono',monospace;font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Budget</span>
+          <span id="lbTotal" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3)">—</span>
+        </div>
+      </div>
+      <div id="lbStatus" style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;white-space:nowrap;text-align:right;min-width:90px">—</div>
+    </div>
+
+    <div class="floors-area" id="floorsArea">
+      <div class="floor-section" id="groundFloorSection">
+        <div class="floor-header">
+          <div class="floor-title">Ground Floor</div>
+          <div class="floor-sqft" id="groundSqftLabel">0 sqft</div>
+        </div>
+        <div class="barndo-grid" id="groundGrid"></div>
+        <div class="add-hint" id="groundHint">
+          Pick a room below, then tap a cell to place it
+        </div>
+      </div>
+
+      <div class="floor-section" id="upperFloorSection" style="display:none">
+        <div class="floor-header">
+          <div class="floor-title">Upper Floor / Loft</div>
+          <div class="floor-sqft" id="upperSqftLabel">0 sqft</div>
+        </div>
+        <div class="barndo-grid" id="upperGrid"></div>
+        <div class="add-hint" id="upperHint">
+          Pick a room below, then tap a cell to place it
+        </div>
+      </div>
+    </div>
+
+    <div class="room-palette" id="roomPalette">
+      <div class="palette-title">Tap a room type, then tap the grid to place it</div>
+      <div class="palette-rooms" id="paletteRooms"></div>
+    </div>
+  </div>
+</div>
+
+<div class="shape-overlay" id="shapeOverlay">
+  <div class="shape-sheet">
+    <div class="shape-header">
+      <div class="shape-title" id="shapeTitle">🛋 Great Room</div>
+      <div class="shape-close" id="shapeClose">✕</div>
+    </div>
+    <div class="shape-instruction">Tap cells to draw your shape · Tap again to remove</div>
+
+    <div class="shape-type-row" id="shapeTypeRow"></div>
+
+    <div class="shape-presets" id="shapePresets">
+      <div class="preset-chip" data-preset="1x1">1×1</div>
+      <div class="preset-chip" data-preset="1x2">1×2</div>
+      <div class="preset-chip" data-preset="2x1">2×1</div>
+      <div class="preset-chip" data-preset="2x2">2×2</div>
+      <div class="preset-chip" data-preset="2x3">2×3</div>
+      <div class="preset-chip" data-preset="3x2">3×2</div>
+      <div class="preset-chip" data-preset="3x3">3×3</div>
+      <div class="preset-chip" data-preset="4x2">4×2</div>
+      <div class="preset-chip" data-preset="2x4">2×4</div>
+      <div class="preset-chip" data-preset="L">L-shape</div>
+      <div class="preset-chip" data-preset="T">T-shape</div>
+    </div>
+
+    <div class="shape-grid-wrap">
+      <div class="shape-grid" id="shapeGrid"></div>
+    </div>
+
+    <div class="shape-meta" id="shapeMeta">0 cells · 0 sqft</div>
+
+    <div class="shape-actions">
+      <div class="btn-secondary" id="shapeCancel">Cancel</div>
+      <div class="btn-danger" id="shapeDelete" style="display:none">Remove</div>
+      <div class="btn-primary" id="shapePlace">Place Room →</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ROOM_TYPES = [
+  { id:'great',    name:'Great Room',    icon:'🛋',  color:'#1a3a6a', light:'#5a8ac0', defaultSqft:800 },
+  { id:'kitchen',  name:'Kitchen',       icon:'🍳',  color:'#6a4a10', light:'#c4a040', defaultSqft:400 },
+  { id:'dining',   name:'Dining',        icon:'🍽',  color:'#4a2a1a', light:'#a06040', defaultSqft:300 },
+  { id:'entry',    name:'Entry',         icon:'🚪',  color:'#2a5a2a', light:'#6aaa6a', defaultSqft:200 },
+  { id:'bath',     name:'Bathroom',      icon:'🚿',  color:'#1a4a2a', light:'#409870', defaultSqft:80  },
+  { id:'bedroom',  name:'Bedroom',       icon:'🛏',  color:'#2a1a5a', light:'#7a5ad0', defaultSqft:200 },
+  { id:'laundry',  name:'Laundry',       icon:'🫧',  color:'#3a1a6a', light:'#7840b8', defaultSqft:250 },
+  { id:'kids',     name:'Kids Zone',     icon:'🎮',  color:'#6a2a10', light:'#c05028', defaultSqft:280 },
+  { id:'office',   name:'Office',        icon:'💻',  color:'#1a2a4a', light:'#4a6a9a', defaultSqft:150 },
+  { id:'game',     name:'Game Room',     icon:'🎱',  color:'#2a1a4a', light:'#6a4a9a', defaultSqft:200 },
+  { id:'pantry',   name:'Pantry',        icon:'📦',  color:'#3a3a1a', light:'#8a8a3a', defaultSqft:100 },
+  { id:'porch',    name:'Porch',         icon:'🌿',  color:'#1a3a2a', light:'#4a8a6a', defaultSqft:200 },
+  { id:'workshop', name:'Workshop',      icon:'🔧',  color:'#3a2a1a', light:'#8a6a3a', defaultSqft:300 },
+  { id:'loft',     name:'Loft',          icon:'🏠',  color:'#2a2a3a', light:'#6a6a9a', defaultSqft:300 },
+  { id:'storage',  name:'Storage',       icon:'🗄',  color:'#2a2a2a', light:'#6a6a6a', defaultSqft:100 },
+];
+
+function getRoomType(id) { return ROOM_TYPES.find(r=>r.id===id) || ROOM_TYPES[0]; }
+
+let COLS = 8;
+let ROWS = 6;
+const BASE_CELL_SIZE = Math.floor((window.innerWidth - 28) / COLS);
+
+function getCellSize() {
+  const availW = window.innerWidth - 28;
+  return Math.max(16, Math.floor(availW / COLS));
+}
+
+let state = {
+  budget: 1100000,
+  land:   749000,
+  families: 4,
+  podsOn: true,
+  podSqfts: [800, 800, 800, 800],
+  twoStory: false,
+  ground: [],
+  upper:  [],
+  selectedPaletteType: null,
+  selectedRoomId: null,
+  selectedFloor: null,
+};
+
+document.querySelectorAll('.ntab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.view).classList.add('active');
+  });
+});
+
+function parseDollar(str) { return parseInt(str.replace(/[^0-9]/g,'')) || 0; }
+function fmtDollar(n) { return '$'+n.toLocaleString(); }
+function fmtK(n) {
+  if(n>=1000000) return '$'+(n/1000000).toFixed(2)+'M';
+  return '$'+Math.round(n/1000)+'K';
+}
+
+function formatInputOnBlur(el) {
+  const raw = parseDollar(el.value);
+  el.value = fmtDollar(raw);
+}
+
+['fBudget','fLand'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('focus', () => { el.value = parseDollar(el.value) || ''; });
+  el.addEventListener('blur', () => { formatInputOnBlur(el); syncFromInputs(); });
+  el.addEventListener('input', () => { syncFromInputs(); });
+});
+
+document.getElementById('fFamilies').addEventListener('input', () => {
+  state.families = parseInt(document.getElementById('fFamilies').value) || 1;
+  rebuildPodInputs();
+  syncFromInputs();
+});
+
+function syncFromInputs() {
+  state.budget = parseDollar(document.getElementById('fBudget').value);
+  state.land   = parseDollar(document.getElementById('fLand').value);
+  state.families = parseInt(document.getElementById('fFamilies').value) || 1;
+  renderOverview();
+}
+
+document.getElementById('podToggle').addEventListener('click', () => {
+  state.podsOn = !state.podsOn;
+  document.getElementById('podToggle').className = 'pill' + (state.podsOn?' on':'');
+  document.getElementById('podFields').style.display = state.podsOn ? 'block' : 'none';
+  renderOverview();
+});
+
+function rebuildPodInputs() {
+  const n = state.families;
+  while(state.podSqfts.length < n) state.podSqfts.push(800);
+  state.podSqfts = state.podSqfts.slice(0, n);
+  const container = document.getElementById('podInputs');
+  container.innerHTML = '';
+  state.podSqfts.forEach((sq, i) => {
+    const row = document.createElement('div');
+    row.className = 'pod-sqft-row';
+    const names = ['Jake\'s Family','Brother 1','Brother 2','Family 4','Family 5'];
+    row.innerHTML = `
+      <div class="pod-sqft-label">${names[i] || 'Family '+(i+1)}</div>
+      <input class="pod-sqft-input" type="number" inputmode="numeric" value="${sq}" min="400" max="2000" data-idx="${i}">`;
+    container.appendChild(row);
+    row.querySelector('input').addEventListener('input', function() {
+      state.podSqfts[i] = parseInt(this.value) || 800;
+      renderOverview();
+    });
+  });
+}
+
+function barnDoSqft() {
+  const allRooms = [...state.ground, ...state.upper];
+  if(allRooms.length === 0) return COLS * ROWS * 100;
+  return allRooms.reduce((a,r) => a + r.sqft, 0);
+}
+
+function calcBarndo(sqft) {
+  const allRooms = [...state.ground, ...state.upper];
+  const countOf = (typeId) => allRooms.filter(r=>r.typeId===typeId).length;
+  const baths    = Math.max(1, countOf('bath'));
+  const kitchens = Math.max(1, countOf('kitchen'));
+  const hasLaundry = countOf('laundry') > 0;
+
+  const slab    = Math.round(sqft * 9);
+  const shell   = Math.round(sqft * 21.5);
+  const frame   = Math.round(sqft * 7.2);
+  const elec    = Math.round(sqft * 9.6);
+  const plumb   = Math.round((8000 + baths * 3500 + kitchens * 4000));
+  const hvac    = Math.round(sqft * 7.2);
+  const drywall = Math.round(sqft * 8.6);
+  const kitchen = Math.round(kitchens * 18000 * Math.max(1,(sqft/2090)*0.7));
+  const windows = Math.round(sqft * 5.7);
+  const laundry = hasLaundry ? Math.round(11000 * Math.max(1,(sqft/2090)*0.75)) : 0;
+  const twoS    = state.twoStory ? Math.round((sqft/2)*13)+5500+6000+6500 : 0;
+  const sub     = slab+shell+frame+elec+plumb+hvac+drywall+kitchen+windows+laundry+twoS;
+  const conting = Math.round(sub*0.10);
+  return {slab,shell,frame,elec,plumb,hvac,drywall,kitchen,windows,laundry,twoS,conting,total:sub+conting,baths,kitchens,hasLaundry};
+}
+
+function podCostForSqft(sqft) {
+  return Math.round(44000 + Math.max(0,(sqft-400)*38) + 18000);
+}
+
+function renderOverview() {
+  const sqft = barnDoSqft();
+  const costs = calcBarndo(sqft);
+
+  const podTotal = state.podsOn
+    ? state.podSqfts.reduce((a,sq)=>a+podCostForSqft(sq),0) : 0;
+  const avgPodCost = state.podsOn && state.families>0
+    ? Math.round(podTotal/state.families) : 0;
+
+  const totalNeeded = state.land + podTotal + costs.total;
+  const remain = state.budget - totalNeeded;
+  const pct = Math.min(100, Math.round((totalNeeded/state.budget)*100));
+
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('sumLand',   fmtK(state.land));
+  set('sumPods',   state.podsOn ? fmtK(podTotal) : '$0');
+  set('sumBarndo', fmtK(costs.total));
+  set('sumTotal',  fmtK(totalNeeded));
+
+  set('bSlab',    fmtK(costs.slab));
+  set('bShell',   fmtK(costs.shell));
+  set('bFrame',   fmtK(costs.frame));
+  set('bElec',    fmtK(costs.elec));
+  set('bPlumb',   fmtK(costs.plumb));
+  set('bHvac',    fmtK(costs.hvac));
+  set('bDrywall', fmtK(costs.drywall));
+  set('bKitch',   fmtK(costs.kitchen));
+  set('bWin',     fmtK(costs.windows));
+  set('bLaundry', fmtK(costs.laundry));
+  set('bConting', fmtK(costs.conting));
+  set('bTotal',   fmtK(costs.total));
+
+  const plumbEl = document.querySelector('#bPlumb')?.previousElementSibling;
+  if(plumbEl) plumbEl.innerHTML = `<span class="badge bv">VAR</span>Plumbing (${costs.baths} bath${costs.baths!==1?'s':''} + ${costs.kitchens} kitchen${costs.kitchens!==1?'s':''})`;
+  const kitchEl = document.querySelector('#bKitch')?.previousElementSibling;
+  if(kitchEl) kitchEl.innerHTML = `<span class="badge bs">SEMI</span>Kitchen Buildout (${costs.kitchens}x)`;
+  const laundryEl = document.querySelector('#bLaundry')?.previousElementSibling;
+  if(laundryEl) laundryEl.innerHTML = `<span class="badge bs">SEMI</span>Laundry${costs.hasLaundry ? ' (placed)' : ' (not placed — $0)'}`;
+
+  const tsRow = document.getElementById('bTwoStoryRow');
+  if(tsRow) tsRow.style.display = state.twoStory ? 'flex' : 'none';
+  set('bTwoStory', fmtK(costs.twoS));
+
+  set('podCostEach',  fmtDollar(avgPodCost));
+  set('podCostTotal', fmtK(podTotal));
+
+  set('bbarRemain', remain>=0 ? fmtK(remain)+' left' : fmtK(Math.abs(remain))+' OVER');
+  const brem = document.getElementById('bbarRemain');
+  if(brem) brem.style.color = remain>=0 ? 'var(--green2)' : 'var(--red2)';
+
+  const bf = document.getElementById('bbarFill');
+  if(bf){
+    bf.style.width = pct+'%';
+    bf.style.background = pct>100?'var(--red)':pct>85?'var(--gold)':'var(--green)';
+  }
+  set('bbarLeft', fmtDollar(state.budget)+' budget');
+  set('bbarPct', pct+'% used');
+
+  const totalCard = document.querySelector('#sumTotal')?.parentElement;
+  if(totalCard){
+    totalCard.className = 'cost-card' + (remain<0?' bad':remain<50000?' hi':' good');
+  }
+}
+
+document.getElementById('twoStoryBtn').addEventListener('click', () => {
+  state.twoStory = !state.twoStory;
+  document.getElementById('twoStoryPill').className = 'pill' + (state.twoStory?' on':'');
+  document.getElementById('twoStoryBtn').className = 'two-story-btn' + (state.twoStory?' on':'');
+  document.getElementById('upperFloorSection').style.display = state.twoStory ? 'block' : 'none';
+  updateLayoutBudgetBar();
+  renderOverview();
+});
+
+function updateGridDimLabels() {
+  document.getElementById('colsVal').textContent = COLS;
+  document.getElementById('rowsVal').textContent = ROWS;
+}
+
+document.getElementById('colsMinus').addEventListener('click', () => {
+  if(COLS <= 4) return;
+  COLS--;
+  ['ground','upper'].forEach(f => {
+    state[f].forEach(r => { r.cells = r.cells.filter(c => (c % (COLS+1)) < COLS); });
+    state[f] = state[f].filter(r => r.cells.length > 0);
+  });
+  updateGridDimLabels(); renderBothGrids();
+});
+document.getElementById('colsPlus').addEventListener('click', () => {
+  if(COLS >= 16) return;
+  COLS++;
+  updateGridDimLabels(); renderBothGrids();
+});
+document.getElementById('rowsMinus').addEventListener('click', () => {
+  if(ROWS <= 3) return;
+  ROWS--;
+  ['ground','upper'].forEach(f => {
+    state[f].forEach(r => { r.cells = r.cells.filter(c => Math.floor(c/COLS) < ROWS); });
+    state[f] = state[f].filter(r => r.cells.length > 0);
+  });
+  updateGridDimLabels(); renderBothGrids();
+});
+document.getElementById('rowsPlus').addEventListener('click', () => {
+  if(ROWS >= 12) return;
+  ROWS++;
+  updateGridDimLabels(); renderBothGrids();
+});
+
+function buildPalette() {
+  const container = document.getElementById('paletteRooms');
+  container.innerHTML = '';
+  ROOM_TYPES.forEach(rt => {
+    const item = document.createElement('div');
+    item.className = 'palette-item';
+    item.dataset.typeId = rt.id;
+    item.innerHTML = `<div class="palette-icon">${rt.icon}</div><div class="palette-name">${rt.name}</div>`;
+    item.addEventListener('click', () => selectPaletteType(rt.id));
+    container.appendChild(item);
+  });
+}
+
+function selectPaletteType(typeId) {
+  state.selectedRoomId = null;
+  state.selectedFloor = null;
+
+  if(state.selectedPaletteType === typeId) {
+    state.selectedPaletteType = null;
+  } else {
+    state.selectedPaletteType = typeId;
+  }
+  renderPaletteSelection();
+  renderBothGrids();
+}
+
+function renderPaletteSelection() {
+  document.querySelectorAll('.palette-item').forEach(item => {
+    item.className = 'palette-item' + (item.dataset.typeId===state.selectedPaletteType?' selected-from-palette':'');
+  });
+}
+
+function buildGrid(gridEl, floor) {
+  const CS = getCellSize();
+  const gridW = CS * COLS;
+  const gridH = CS * ROWS;
+  gridEl.style.gridTemplateColumns = `repeat(${COLS}, ${CS}px)`;
+  gridEl.style.gridTemplateRows    = `repeat(${ROWS}, ${CS}px)`;
+  gridEl.style.width  = gridW + 'px';
+  gridEl.style.height = gridH + 'px';
+  gridEl.innerHTML = '';
+
+  for(let i=0; i<COLS*ROWS; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell empty';
+    cell.dataset.cellIdx = i;
+    cell.dataset.floor = floor;
+    cell.addEventListener('click', () => onCellClick(i, floor));
+    gridEl.appendChild(cell);
+  }
+
+  const rooms = state[floor];
+  rooms.forEach(room => renderRoomBlock(gridEl, room, floor, CS));
+}
+
+function renderRoomBlock(gridEl, room, floor, CS) {
+  CS = CS || getCellSize();
+  if(!room.cells || room.cells.length===0) return;
+  const rt = getRoomType(room.typeId);
+
+  const rows = room.cells.map(c=>Math.floor(c/COLS));
+  const cols = room.cells.map(c=>c%COLS);
+  const minR = Math.min(...rows), maxR = Math.max(...rows);
+  const minC = Math.min(...cols), maxC = Math.max(...cols);
+
+  const block = document.createElement('div');
+  block.className = 'room-block' + (state.selectedRoomId===room.id?' selected':'');
+  block.dataset.roomId = room.id;
+  block.dataset.floor = floor;
+  block.style.background = rt.color+'cc';
+  block.style.left   = (minC * CS + 2) + 'px';
+  block.style.top    = (minR * CS + 2) + 'px';
+  block.style.width  = ((maxC-minC+1)*CS - 4) + 'px';
+  block.style.height = ((maxR-minR+1)*CS - 4) + 'px';
+
+  const showText = (maxC-minC+1)*CS > 44 && (maxR-minR+1)*CS > 30;
+  if(showText) {
+    block.innerHTML = `
+      <div class="room-anchor"></div>
+      <div class="room-block-icon">${rt.icon}</div>
+      <div class="room-block-name">${rt.name}</div>
+      <div class="room-block-sqft">${room.sqft} sqft</div>`;
+  } else {
+    block.innerHTML = `
+      <div class="room-anchor"></div>
+      <div class="room-block-icon" style="font-size:10px">${rt.icon}</div>`;
+  }
+
+  block.addEventListener('click', (e) => {
+    e.stopPropagation();
+    onRoomClick(room.id, floor);
+  });
+  gridEl.appendChild(block);
+}
+
+function renderBothGrids() {
+  buildGrid(document.getElementById('groundGrid'), 'ground');
+  buildGrid(document.getElementById('upperGrid'), 'upper');
+  updateSqftLabels();
+}
+
+function updateLayoutBudgetBar() {
+  const sqft    = barnDoSqft();
+  const costs   = calcBarndo(sqft);
+  const podTotal= state.podsOn ? state.podSqfts.reduce((a,sq)=>a+podCostForSqft(sq),0) : 0;
+  const total   = state.land + podTotal + costs.total;
+  const remain  = state.budget - total;
+  const pct     = Math.min(100, Math.round((total / state.budget) * 100));
+  const over    = remain < 0;
+
+  const fill = document.getElementById('lbFill');
+  if(fill) {
+    fill.style.width = pct + '%';
+    fill.style.background = over ? 'var(--red)' : pct > 90 ? 'var(--gold)' : 'var(--green)';
+  }
+  const status = document.getElementById('lbStatus');
+  if(status) {
+    status.textContent = over
+      ? fmtK(Math.abs(remain)) + ' over'
+      : fmtK(remain) + ' left';
+    status.style.color = over ? 'var(--red2)' : pct > 90 ? 'var(--gold2)' : 'var(--green2)';
+  }
+  const tot = document.getElementById('lbTotal');
+  if(tot) tot.textContent = fmtK(total) + ' of ' + fmtK(state.budget);
+}
+
+function updateSqftLabels() {
+  const gSqft = state.ground.reduce((a,r)=>a+r.sqft,0);
+  const uSqft = state.upper.reduce((a,r)=>a+r.sqft,0);
+  document.getElementById('groundSqftLabel').textContent = gSqft.toLocaleString()+' sqft';
+  document.getElementById('upperSqftLabel').textContent  = uSqft.toLocaleString()+' sqft';
+  updateLayoutBudgetBar();
+  renderOverview();
+}
+
+const SP_COLS = 6;
+const SP_ROWS = 5;
+const SQFT_PER_CELL = 100;
+
+let sp = {
+  open: false,
+  typeId: 'great',
+  filledCells: new Set(), 
+  editingRoomId: null,
+  editingFloor: null,
+  pendingFloor: null,    
+};
+
+function shapeSqft() { return sp.filledCells.size * SQFT_PER_CELL; }
+
+function shapeToOffsets() {
+  const offsets = [];
+  sp.filledCells.forEach(idx => {
+    offsets.push([Math.floor(idx/SP_COLS), idx%SP_COLS]);
+  });
+  if(offsets.length === 0) return [[0,0]];
+  const minR = Math.min(...offsets.map(o=>o[0]));
+  const minC = Math.min(...offsets.map(o=>o[1]));
+  return offsets.map(([r,c]) => [r-minR, c-minC]);
+}
+
+function offsetsToFloorCells(anchorIdx, offsets) {
+  const anchorRow = Math.floor(anchorIdx / COLS);
+  const anchorCol = anchorIdx % COLS;
+  return offsets.map(([dr,dc]) => {
+    const r = anchorRow + dr;
+    const c = anchorCol + dc;
+    if(r < 0 || r >= ROWS || c < 0 || c >= COLS) return -1;
+    return r * COLS + c;
+  }).filter(i => i >= 0);
+}
+
+function openShapePicker(options) {
+  sp.typeId = options.typeId || 'great';
+  sp.editingRoomId = options.editingRoomId || null;
+  sp.editingFloor  = options.editingFloor  || null;
+  sp.pendingFloor  = options.pendingFloor  || 'ground';
+  sp.filledCells   = new Set();
+
+  if(sp.editingRoomId && sp.editingFloor) {
+    const room = state[sp.editingFloor].find(r=>r.id===sp.editingRoomId);
+    if(room && room.cells.length > 0) {
+      const rows = room.cells.map(c=>Math.floor(c/COLS));
+      const cols = room.cells.map(c=>c%COLS);
+      const minR = Math.min(...rows), minC = Math.min(...cols);
+      room.cells.forEach(c => {
+        const dr = Math.floor(c/COLS) - minR;
+        const dc = (c%COLS) - minC;
+        if(dr < SP_ROWS && dc < SP_COLS) sp.filledCells.add(dr*SP_COLS+dc);
+      });
+    }
+  } else {
+    applyPreset(getRoomType(sp.typeId).defaultPreset || '2x2');
+  }
+
+  buildShapeTypeRow();
+  buildShapeGrid();
+  updateShapeMeta();
+
+  const deleteBtn = document.getElementById('shapeDelete');
+  deleteBtn.style.display = sp.editingRoomId ? 'block' : 'none';
+
+  const placeBtn = document.getElementById('shapePlace');
+  placeBtn.textContent = sp.editingRoomId ? 'Update Room' : 'Place Room →';
+
+  document.getElementById('shapeOverlay').classList.add('show');
+}
+
+function closeShapePicker() {
+  document.getElementById('shapeOverlay').classList.remove('show');
+  sp.editingRoomId = null;
+  sp.editingFloor  = null;
+}
+
+function buildShapeTypeRow() {
+  const row = document.getElementById('shapeTypeRow');
+  row.innerHTML = '';
+  ROOM_TYPES.forEach(rt => {
+    const btn = document.createElement('div');
+    btn.className = 'stype-btn' + (rt.id===sp.typeId?' active':'');
+    btn.innerHTML = `<div class="si">${rt.icon}</div><div class="sl">${rt.name}</div>`;
+    btn.addEventListener('click', () => {
+      sp.typeId = rt.id;
+      document.getElementById('shapeTitle').textContent = rt.icon+' '+rt.name;
+      row.querySelectorAll('.stype-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+    row.appendChild(btn);
+  });
+  const rt = getRoomType(sp.typeId);
+  document.getElementById('shapeTitle').textContent = rt.icon+' '+rt.name;
+}
+
+function buildShapeGrid() {
+  const grid = document.getElementById('shapeGrid');
+  grid.style.gridTemplateColumns = `repeat(${SP_COLS},40px)`;
+  grid.style.gridTemplateRows    = `repeat(${SP_ROWS},40px)`;
+  grid.innerHTML = '';
+
+  for(let i=0; i<SP_COLS*SP_ROWS; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'shape-cell' + (sp.filledCells.has(i)?' filled':'');
+    cell.dataset.idx = i;
+    refreshShapeCell(cell, i);
+    cell.addEventListener('click', () => toggleShapeCell(i));
+    cell.addEventListener('touchstart', e => {
+      e.preventDefault();
+      toggleShapeCell(i);
+    }, {passive:false});
+    grid.appendChild(cell);
+  }
+}
+
+function refreshShapeCell(cell, i) {
+  if(sp.filledCells.has(i)) {
+    const rt = getRoomType(sp.typeId);
+    cell.className = 'shape-cell filled' + (i===0?' anchor':'');
+    cell.style.background = rt.color+'cc';
+    cell.style.borderColor = i===0 ? 'white' : rt.light+'88';
+    cell.textContent = i===getAnchorCell() ? '↖' : '';
+    cell.style.color = 'rgba(255,255,255,0.7)';
+    cell.style.fontSize = '14px';
+  } else {
+    cell.className = 'shape-cell';
+    cell.style.background = '';
+    cell.style.borderColor = '';
+    cell.textContent = '';
+  }
+}
+
+function getAnchorCell() {
+  if(sp.filledCells.size === 0) return -1;
+  let anchor = -1, anchorR=999, anchorC=999;
+  sp.filledCells.forEach(i => {
+    const r=Math.floor(i/SP_COLS), c=i%SP_COLS;
+    if(r<anchorR||(r===anchorR&&c<anchorC)){anchor=i;anchorR=r;anchorC=c;}
+  });
+  return anchor;
+}
+
+function toggleShapeCell(i) {
+  if(sp.filledCells.has(i)) {
+    sp.filledCells.delete(i);
+  } else {
+    sp.filledCells.add(i);
+  }
+  document.querySelectorAll('.shape-cell').forEach(cell => {
+    refreshShapeCell(cell, parseInt(cell.dataset.idx));
+  });
+  updateShapeMeta();
+}
+
+function updateShapeMeta() {
+  const cells = sp.filledCells.size;
+  const sqft  = cells * SQFT_PER_CELL;
+  document.getElementById('shapeMeta').innerHTML =
+    `<span>${cells}</span> cells · <span>${sqft.toLocaleString()}</span> sqft · tap cells to draw your shape`;
+}
+
+function applyPreset(preset) {
+  sp.filledCells = new Set();
+  const p = {
+    '1x1': [[0,0]],
+    '1x2': [[0,0],[0,1]],
+    '2x1': [[0,0],[1,0]],
+    '2x2': [[0,0],[0,1],[1,0],[1,1]],
+    '2x3': [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2]],
+    '3x2': [[0,0],[0,1],[1,0],[1,1],[2,0],[2,1]],
+    '3x3': [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]],
+    '4x2': [[0,0],[0,1],[1,0],[1,1],[2,0],[2,1],[3,0],[3,1]],
+    '2x4': [[0,0],[0,1],[0,2],[0,3],[1,0],[1,1],[1,2],[1,3]],
+    'L':   [[0,0],[1,0],[2,0],[2,1]],
+    'T':   [[0,0],[0,1],[0,2],[1,1]],
+  }[preset] || [[0,0],[0,1],[1,0],[1,1]];
+  p.forEach(([r,c]) => sp.filledCells.add(r*SP_COLS+c));
+}
+
+document.querySelectorAll('.preset-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    applyPreset(chip.dataset.preset);
+    buildShapeGrid();
+    updateShapeMeta();
+  });
+});
+
+let isDragging = false;
+document.getElementById('shapeGrid').addEventListener('touchmove', e => {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  if(el && el.classList.contains('shape-cell')) {
+    const i = parseInt(el.dataset.idx);
+    if(!sp.filledCells.has(i)) {
+      sp.filledCells.add(i);
+      document.querySelectorAll('.shape-cell').forEach(cell => {
+        refreshShapeCell(cell, parseInt(cell.dataset.idx));
+      });
+      updateShapeMeta();
+    }
+  }
+}, {passive:false});
+
+document.getElementById('shapePlace').addEventListener('click', () => {
+  if(sp.filledCells.size === 0) return;
+  const offsets = shapeToOffsets();
+
+  if(sp.editingRoomId) {
+    const room = state[sp.editingFloor].find(r=>r.id===sp.editingRoomId);
+    if(room) {
+      room.typeId = sp.typeId;
+      room.sqft   = shapeSqft();
+      const anchor = room.cells[0] || 0;
+      room.cells = offsetsToFloorCells(anchor, offsets);
+    }
+    closeShapePicker();
+    clearSelection();
+    renderBothGrids();
+  } else {
+    state.pendingOffsets = offsets;
+    state.pendingTypeId  = sp.typeId;
+    state.pendingFloor   = sp.pendingFloor;
+    closeShapePicker();
+    document.getElementById('groundHint').textContent = '↖ Tap where you want the top-left corner';
+    document.getElementById('upperHint').textContent  = '↖ Tap where you want the top-left corner';
+    renderBothGrids();
+  }
+});
+
+document.getElementById('shapeDelete').addEventListener('click', () => {
+  if(!sp.editingRoomId) return;
+  state[sp.editingFloor] = state[sp.editingFloor].filter(r=>r.id!==sp.editingRoomId);
+  closeShapePicker();
+  clearSelection();
+  renderBothGrids();
+});
+
+document.getElementById('shapeClose').addEventListener('click', closeShapePicker);
+document.getElementById('shapeCancel').addEventListener('click', closeShapePicker);
+document.getElementById('shapeOverlay').addEventListener('click', e => {
+  if(e.target===document.getElementById('shapeOverlay')) closeShapePicker();
+});
+
+function onCellClick(cellIdx, floor) {
+  if(state.pendingOffsets) {
+    const cells = offsetsToFloorCells(cellIdx, state.pendingOffsets);
+    const room = {
+      id: 'r' + Date.now() + Math.random().toString(36).slice(2,5),
+      typeId: state.pendingTypeId,
+      sqft:   state.pendingOffsets.length * SQFT_PER_CELL,
+      cells,
+    };
+    state[floor].push(room);
+    state.pendingOffsets = null;
+    state.pendingTypeId  = null;
+    document.getElementById('groundHint').textContent = 'Pick a room below, then tap a cell to place it';
+    document.getElementById('upperHint').textContent  = 'Pick a room below, then tap a cell to place it';
+    renderBothGrids();
+    return;
+  }
+
+  if(state.selectedRoomId !== null) {
+    moveRoom(cellIdx, floor);
+    return;
+  }
+}
+
+function onRoomClick(roomId, floor) {
+  if(state.pendingOffsets) return;
+
+  if(state.selectedRoomId === roomId) {
+    const room = state[floor].find(r=>r.id===roomId);
+    if(room) openShapePicker({ typeId:room.typeId, editingRoomId:roomId, editingFloor:floor });
+    state.selectedRoomId = null;
+    state.selectedFloor  = null;
+    renderBothGrids();
+  } else {
+    state.selectedRoomId = roomId;
+    state.selectedFloor  = floor;
+    renderBothGrids();
+  }
+}
+
+function moveRoom(targetCell, targetFloor) {
+  const roomId  = state.selectedRoomId;
+  const srcFloor= state.selectedFloor;
+  const room    = state[srcFloor].find(r=>r.id===roomId);
+  if(!room) { clearSelection(); return; }
+
+  const rows = room.cells.map(c=>Math.floor(c/COLS));
+  const cols = room.cells.map(c=>c%COLS);
+  const minR = Math.min(...rows), minC = Math.min(...cols);
+  const offsets = room.cells.map(c=>[Math.floor(c/COLS)-minR, (c%COLS)-minC]);
+  const newCells = offsetsToFloorCells(targetCell, offsets);
+
+  state[srcFloor] = state[srcFloor].filter(r=>r.id!==roomId);
+  room.cells = newCells;
+  state[targetFloor].push(room);
+  clearSelection();
+  renderBothGrids();
+}
+
+function clearSelection() {
+  state.selectedRoomId = null;
+  state.selectedFloor  = null;
+  state.pendingOffsets = null;
+  state.pendingTypeId  = null;
+  renderPaletteSelection();
+}
+
+function selectPaletteType(typeId) {
+  state.selectedRoomId = null;
+  state.selectedFloor  = null;
+  openShapePicker({ typeId, pendingFloor:'ground' });
+}
+
+ROOM_TYPES.forEach(rt => {
+  const presets = {
+    great:'3x3', kitchen:'2x3', dining:'2x2', entry:'1x2',
+    bath:'1x1', laundry:'2x2', kids:'3x2', office:'2x2',
+    bedroom:'2x2', game:'2x3', pantry:'1x1', porch:'2x1', workshop:'3x2', loft:'3x2', storage:'1x1',
+  };
+  rt.defaultPreset = presets[rt.id] || '2x2';
+});
+
+function init() {
+  state.pendingOffsets = null;
+  state.pendingTypeId  = null;
+
+  rebuildPodInputs();
+  buildPalette();
+  renderBothGrids();
+  renderOverview();
+
+  const defaults = [
+    { typeId:'entry',   preset:'2x1', anchor:0  },
+    { typeId:'great',   preset:'3x3', anchor:8  },
+    { typeId:'kitchen', preset:'2x3', anchor:13 },
+    { typeId:'bath',    preset:'1x2', anchor:20 },
+    { typeId:'laundry', preset:'2x2', anchor:22 },
+    { typeId:'kids',    preset:'3x2', anchor:32 },
+  ];
+  defaults.forEach(d => {
+    applyPreset(d.preset);
+    const offsets = shapeToOffsets();
+    const cells = offsetsToFloorCells(d.anchor, offsets);
+    const rt = getRoomType(d.typeId);
+    state.ground.push({
+      id: 'r'+Date.now()+Math.random().toString(36).slice(2,5),
+      typeId: d.typeId,
+      sqft: offsets.length * SQFT_PER_CELL,
+      cells,
+    });
+    sp.filledCells = new Set();
+  });
+  renderBothGrids();
+}
+
+init();
+</script>
+
+<div id="shareBtn" style="
+  position:fixed; bottom:0; left:0; right:0; z-index:100;
+  padding:12px 16px 28px; background:linear-gradient(to top, var(--bg) 60%, transparent);
+  pointer-events:none;
+">
+  <button onclick="generatePrintView()" style="
+    width:100%; padding:14px; pointer-events:auto;
+    background:linear-gradient(135deg, #c8963c, #e8b84a);
+    border:none; border-radius:12px; cursor:pointer;
+    font-family:'DM Mono',monospace; font-size:12px;
+    font-weight:500; letter-spacing:0.12em; text-transform:uppercase;
+    color:#0f0e0b; display:flex; align-items:center; justify-content:center; gap:8px;
+    box-shadow: 0 4px 20px rgba(200,150,60,0.4), 0 2px 8px rgba(0,0,0,0.4);
+  ">
+    <span style="font-size:16px">📋</span> Package &amp; Share
+  </button>
+</div>
+
+<style>
+@media print {
+  body * { visibility: hidden; }
+  #printView, #printView * { visibility: visible; }
+  #printView {
+    position: fixed; top: 0; left: 0; right: 0;
+    width: 100%; background: white; color: #111;
+  }
+}
+#printView {
+  display: none;
+  font-family: 'DM Sans', sans-serif;
+  background: white; color: #111;
+  padding: 32px 28px;
+  position: fixed; inset: 0; overflow-y: auto; z-index: 500;
+}
+#printView.show { display: block; }
+.pv-close {
+  position: fixed; top: 16px; right: 16px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #f0ede6; border: 1px solid #ddd;
+  font-size: 16px; cursor: pointer; z-index: 501;
+  display: flex; align-items: center; justify-content: center;
+  color: #555;
+}
+.pv-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #c8963c; }
+.pv-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: #1a1408; line-height: 1.1; }
+.pv-title em { font-style: italic; color: #c8963c; }
+.pv-sub { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+.pv-date { font-family: 'DM Mono', monospace; font-size: 9px; color: #aaa; margin-top: 4px; }
+
+.pv-section { margin-bottom: 20px; }
+.pv-section-title {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #c8963c; margin-bottom: 10px;
+  padding-bottom: 4px; border-bottom: 1px solid #e8dfc8;
+}
+.pv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.pv-card {
+  background: #faf8f4; border: 1px solid #e8e0cc;
+  border-radius: 8px; padding: 12px;
+}
+.pv-card.hi { border-color: #c8963c; background: #fffaf0; }
+.pv-card.good { border-color: #4a8a5a; background: #f0faf4; }
+.pv-card.bad { border-color: #c04a2a; background: #fff4f0; }
+.pv-card-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #c8963c; line-height: 1; }
+.pv-card.good .pv-card-val { color: #3a7a4a; }
+.pv-card.bad .pv-card-val { color: #c04a2a; }
+.pv-card-lbl { font-family: 'DM Mono', monospace; font-size: 7px; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
+
+.pv-row { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid #f0ece0; font-size: 12px; }
+.pv-row:last-child { border-bottom: none; }
+.pv-row-lbl { color: #555; }
+.pv-row-val { font-family: 'DM Mono', monospace; color: #c8963c; font-size: 11px; font-weight: 500; }
+.pv-row-total { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #1a1408; }
+.pv-row-total-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #c8963c; }
+
+.pv-floor-title { font-family: 'DM Mono', monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: #888; margin-bottom: 6px; }
+.pv-floor-canvas { border: 2px solid #c8963c; border-radius: 6px; width: 100%; display: block; }
+
+.pv-room-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pv-room-chip {
+  display: flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 20px;
+  font-family: 'DM Mono', monospace; font-size: 9px;
+  border: 1px solid #e0d8c0; background: #faf8f4; color: #555;
+}
+
+.pv-print-btn {
+  display: block; width: 100%; margin-top: 20px; padding: 14px;
+  background: #c8963c; border: none; border-radius: 10px;
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: white; cursor: pointer;
+  text-align: center;
+}
+</style>
+
+<div id="printView">
+  <div class="pv-close" onclick="closePrintView()">✕</div>
+  <div id="printViewContent"></div>
+  <button class="pv-print-btn" onclick="window.print()">📄 Save as PDF / Print</button>
+  <div style="height:20px"></div>
+</div>
+
+<script>
+function fmtKp(n) {
+  if(n>=1000000) return '$'+(n/1000000).toFixed(2)+'M';
+  return '$'+Math.round(n/1000)+'K';
+}
+
+function generatePrintView() {
+  const sqft   = barnDoSqft();
+  const costs  = calcBarndo(sqft);
+  const podTotal = state.podsOn ? state.podSqfts.reduce((a,sq)=>a+podCostForSqft(sq),0) : 0;
+  const total  = state.land + podTotal + costs.total;
+  const remain = state.budget - total;
+  const over   = remain < 0;
+  const date   = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+  const gRooms = state.ground;
+  const uRooms = state.upper;
+
+  const groundDataUrl = renderFloorToCanvas(state.ground, 'Ground Floor');
+  const upperDataUrl  = state.twoStory ? renderFloorToCanvas(state.upper, 'Upper Floor') : null;
+
+  const roomSummary = (rooms) => rooms.map(r => {
+    const rt = getRoomType(r.typeId);
+    return `<div class="pv-room-chip" style="background:${rt.color}22;border-color:${rt.color}66;color:${rt.light}">
+      ${rt.icon} ${rt.name} <span style="color:#aaa">${r.sqft}sf</span>
+    </div>`;
+  }).join('');
+
+  const html = `
+    <div class="pv-header">
+      <div class="pv-sub">Family Compound Planner</div>
+      <div class="pv-title">The <em>Debt-Free</em> Family Plan</div>
+      <div class="pv-date">Generated ${date} · ${state.families} families · ${sqft.toLocaleString()} sqft barndo</div>
+    </div>
+
+    <div class="pv-section">
+      <div class="pv-section-title">Cost Summary</div>
+      <div class="pv-grid">
+        <div class="pv-card">
+          <div class="pv-card-val">${fmtKp(state.land)}</div>
+          <div class="pv-card-lbl">Land</div>
+        </div>
+        <div class="pv-card">
+          <div class="pv-card-val">${state.podsOn ? fmtKp(podTotal) : '$0'}</div>
+          <div class="pv-card-lbl">Family Pods (${state.families}x)</div>
+        </div>
+        <div class="pv-card hi">
+          <div class="pv-card-val">${fmtKp(costs.total)}</div>
+          <div class="pv-card-lbl">Community Barndo</div>
+        </div>
+        <div class="pv-card ${over?'bad':'good'}">
+          <div class="pv-card-val">${fmtKp(total)}</div>
+          <div class="pv-card-lbl">Total Needed</div>
+        </div>
+      </div>
+      <div style="background:${over?'#fff4f0':'#f0faf4'};border:1px solid ${over?'#c04a2a':'#4a8a5a'};border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.1em">$${(state.budget/1000000).toFixed(2)}M budget → </span>
+        <span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:${over?'#c04a2a':'#3a7a4a'}">${over?'':''}${fmtKp(Math.abs(remain))} ${over?'over budget':'remaining'}</span>
+      </div>
+    </div>
+
+    <div class="pv-section">
+      <div class="pv-section-title">Barndo Build Breakdown · ${sqft.toLocaleString()} sqft</div>
+      <div class="pv-row"><span class="pv-row-lbl">Concrete Slab</span><span class="pv-row-val">${fmtKp(costs.slab)}</span></div>
+      <div class="pv-row"><span class="pv-row-lbl">Steel Shell + Erection</span><span class="pv-row-val">${fmtKp(costs.shell)}</span></div>
+      <div class="pv-row"><span class="pv-row-lbl">Interior Framing (DIY labor)</span><span class="pv-row-val">${fmtKp(costs.frame)}</span></div>
+      <div class="pv-row"><span class="pv-row-lbl">Electrical</span><span class="pv-row-val">${fmtKp(costs.elec)}</span></div>
+      <div class="pv-row"><span class="pv-row-lbl">Plumbing (${costs.baths} bath${costs.baths!==1?'s':''} + ${costs.kitchens} kitchen${costs.kitchens!==1?'s':''})</span><span class="pv-row-val">${fmtKp(costs.plumb)}</span></div>
+      <div class="pv-row"><span class="pv-row-lbl">HVAC</span><span class="pv-row-val">${fmtKp(costs.hvac)}</span></div>
+      <div class="pv-row"><span class="pv-row-lbl">Insulation + Drywall</span><span class="pv-row-val">${fmtKp(costs.drywall)}</span></div>
+      <div class="pv-row"><span class="pv-row-lbl">Kitchen Buildout (${costs.kitchens}x)</span><span class="pv-row-val">${fmtKp(costs.kitchen)}</span></div>
+      <div class="pv-row"><span class="pv-row-lbl">Windows + Doors</span><span class="pv-row-val">${fmtKp(costs.windows)}</span></div>
+      <div class="pv-row"><span class="pv-row-lbl">Laundry${costs.hasLaundry?' (placed)':' (not placed)'}</span><span class="pv-row-val">${fmtKp(costs.laundry)}</span></div>
+      ${state.twoStory ? `<div class="pv-row"><span class="pv-row-lbl">Two-Story Premium</span><span class="pv-row-val">${fmtKp(costs.twoS)}</span></div>` : ''}
+      <div class="pv-row"><span class="pv-row-lbl">Contingency (10%)</span><span class="pv-row-val">${fmtKp(costs.conting)}</span></div>
+      <div class="pv-row" style="border-top:1px solid #c8963c;margin-top:4px;padding-top:10px">
+        <span class="pv-row-total">Total Build</span>
+        <span class="pv-row-total-val">${fmtKp(costs.total)}</span>
+      </div>
+    </div>
+
+    <div class="pv-section">
+      <div class="pv-section-title">Floor Plan · Ground Floor (${state.ground.reduce((a,r)=>a+r.sqft,0).toLocaleString()} sqft)</div>
+      ${groundDataUrl ? `<img class="pv-floor-canvas" src="${groundDataUrl}" style="width:100%;border-radius:6px;display:block">` : '<div style="color:#888;font-size:12px">No rooms placed yet</div>'}
+      <div class="pv-room-list">${roomSummary(gRooms)}</div>
+    </div>
+
+    ${upperDataUrl ? `
+    <div class="pv-section">
+      <div class="pv-section-title">Floor Plan · Upper Floor / Loft (${state.upper.reduce((a,r)=>a+r.sqft,0).toLocaleString()} sqft)</div>
+      <img class="pv-floor-canvas" src="${upperDataUrl}" style="width:100%;border-radius:6px;display:block">
+      <div class="pv-room-list">${roomSummary(uRooms)}</div>
+    </div>` : ''}
+
+    <div class="pv-section">
+      <div class="pv-section-title">The Plan</div>
+      <div style="font-size:12px;color:#555;line-height:1.7">
+        <b>Phase 1:</b> All families sell homes simultaneously and pool equity. Purchase ${fmtKp(state.land)} land cash — zero mortgage.<br>
+        <b>Phase 2:</b> ${state.podsOn ? `Place ${state.families} prefab pods on the land. Everyone moves in debt-free.` : 'Move into existing structures on the land.'}<br>
+        <b>Phase 3:</b> Build the ${sqft.toLocaleString()} sqft community barndominium${state.twoStory?' (two-story)':''} — financed or pay-as-you-go.<br><br>
+        <b>Douglas County, MO:</b> No building codes · No permits required · $800/year taxes · 2 wells on property
+      </div>
+    </div>
+  `;
+
+  document.getElementById('printViewContent').innerHTML = html;
+  document.getElementById('printView').classList.add('show');
+  document.getElementById('printView').scrollTop = 0;
+}
+
+function closePrintView() {
+  document.getElementById('printView').classList.remove('show');
+}
+
+function renderFloorToCanvas(rooms, title) {
+  const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const W = 600, H = 300;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const cx = c.getContext('2d');
+
+  cx.fillStyle = isDark ? '#1a1810' : '#f9f9f9';
+  cx.fillRect(0, 0, W, H);
+
+  const cs = Math.floor(W / COLS);
+  const rh = Math.floor(H / ROWS);
+  cx.strokeStyle = isDark ? '#2a2820' : '#e0e0e0';
+  cx.lineWidth = 0.5;
+  for(let col=0; col<=COLS; col++) { cx.beginPath(); cx.moveTo(col*cs,0); cx.lineTo(col*cs,H); cx.stroke(); }
+  for(let row=0; row<=ROWS; row++) { cx.beginPath(); cx.moveTo(0,row*rh); cx.lineTo(W,row*rh); cx.stroke(); }
+
+  rooms.forEach(room => {
+    if(!room.cells || room.cells.length===0) return;
+    const rt = getRoomType(room.typeId);
+    const rows2 = room.cells.map(c2=>Math.floor(c2/COLS));
+    const cols2 = room.cells.map(c2=>c2%COLS);
+    const minR=Math.min(...rows2),maxR=Math.max(...rows2);
+    const minC=Math.min(...cols2),maxC=Math.max(...cols2);
+    const rx=minC*cs+2, ry=minR*rh+2;
+    const rw=(maxC-minC+1)*cs-4, rh2=(maxR-minR+1)*rh-4;
+
+    cx.fillStyle = rt.color+'cc';
+    cx.fillRect(rx, ry, rw, rh2);
+    cx.strokeStyle = rt.light+'99';
+    cx.lineWidth = 1.5;
+    cx.strokeRect(rx+1, ry+1, rw-2, rh2-2);
+
+    if(rw > 60 && rh2 > 28) {
+      cx.fillStyle = 'rgba(255,255,255,0.9)';
+      cx.font = `bold ${Math.min(12, rw/6)}px DM Sans, sans-serif`;
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText(`${rt.icon} ${rt.name}`, rx+rw/2, ry+rh2/2-6);
+      cx.font = `${Math.min(9, rw/8)}px DM Mono, monospace`;
+      cx.fillStyle = 'rgba(255,255,255,0.5)';
+      cx.fillText(`${room.sqft} sqft`, rx+rw/2, ry+rh2/2+8);
+    } else if(rw > 20 && rh2 > 16) {
+      cx.font = '12px serif';
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText(rt.icon, rx+rw/2, ry+rh2/2);
+    }
+  });
+
+  cx.strokeStyle = '#c8963c';
+  cx.lineWidth = 2;
+  cx.strokeRect(1, 1, W-2, H-2);
+
+  return c.toDataURL('image/png');
+}
+</script>
+
+</body>
+</html>
