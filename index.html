@@ -194,26 +194,59 @@ nav {
 
 /* Floor area */
 .floors-area {
-  flex:1; overflow-y:auto; overflow-x:auto; -webkit-overflow-scrolling:touch;
+  flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
   padding:10px 0 80px;
 }
 
-.floor-section { margin-bottom:14px; padding:0 14px; }
-.floor-section .barndo-grid { margin:0; }
+.floor-section { margin-bottom:20px; padding:0 14px; }
 .floor-header {
   display:flex; align-items:center; justify-content:space-between;
   margin-bottom:8px;
 }
 .floor-title { font-family:'DM Mono',monospace; font-size:15px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
-.floor-sqft { font-family:'DM Mono',monospace; font-size:15px; color:var(--text3); }
+
+/* Zoom viewport — clips the grid, handles pan */
+.grid-zoom-wrap {
+  overflow:hidden;
+  position:relative;
+  border:2px solid var(--gold);
+  border-radius:6px;
+  background:var(--surf2);
+  touch-action:none;
+  cursor:grab;
+}
+.grid-zoom-wrap:active { cursor:grabbing; }
+
+/* Inner scaler — gets transform:scale applied */
+.grid-zoom-inner {
+  transform-origin: 0 0;
+  position:relative;
+  display:inline-block;
+}
+
+/* Zoom controls */
+.zoom-controls {
+  display:flex; align-items:center; gap:6px; margin-bottom:6px;
+}
+.zoom-btn {
+  width:30px; height:30px; border-radius:6px;
+  background:var(--surf2); border:1px solid var(--border);
+  color:var(--gold2); font-size:16px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  user-select:none; flex-shrink:0;
+}
+.zoom-btn:active { background:var(--border); }
+.zoom-val {
+  font-family:'DM Mono',monospace; font-size:10px;
+  color:var(--text3); min-width:36px; text-align:center;
+}
 
 /* THE GRID */
 .barndo-grid {
-  background:var(--surf2); border:2px solid var(--gold);
-  border-radius:6px; overflow:hidden; position:relative;
+  background:var(--surf2); position:relative;
   display:grid; user-select:none;
   touch-action:none;
-  width:100%; box-sizing:border-box;
+  flex-shrink:0;
 }
 
 .grid-cell {
@@ -566,12 +599,21 @@ nav {
       <div class="floor-section" id="groundFloorSection">
         <div class="floor-header">
           <div class="floor-title">Ground Floor</div>
+          <div class="zoom-controls">
+            <div class="zoom-btn" id="zoomOutG">−</div>
+            <div class="zoom-val" id="zoomValG">100%</div>
+            <div class="zoom-btn" id="zoomInG">+</div>
+          </div>
         </div>
         <!-- Template picker -->
         <div id="templateRow" style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:0 0 10px;margin-bottom:2px">
           <style>#templateRow::-webkit-scrollbar{display:none}</style>
         </div>
-        <div class="barndo-grid" id="groundGrid"></div>
+        <div class="grid-zoom-wrap" id="groundZoomWrap">
+          <div class="grid-zoom-inner" id="groundZoomInner">
+            <div class="barndo-grid" id="groundGrid"></div>
+          </div>
+        </div>
         <div class="add-hint" id="groundHint">
           Tap a room type below to place it
         </div>
@@ -581,8 +623,17 @@ nav {
       <div class="floor-section" id="upperFloorSection" style="display:none">
         <div class="floor-header">
           <div class="floor-title">Upper Floor / Loft</div>
+          <div class="zoom-controls">
+            <div class="zoom-btn" id="zoomOutU">−</div>
+            <div class="zoom-val" id="zoomValU">100%</div>
+            <div class="zoom-btn" id="zoomInU">+</div>
+          </div>
         </div>
-        <div class="barndo-grid" id="upperGrid"></div>
+        <div class="grid-zoom-wrap" id="upperZoomWrap">
+          <div class="grid-zoom-inner" id="upperZoomInner">
+            <div class="barndo-grid" id="upperGrid"></div>
+          </div>
+        </div>
         <div class="add-hint" id="upperHint">
           Tap a room type below to place it
         </div>
@@ -1040,6 +1091,8 @@ function renderRoomBlock(gridEl, room, floor, CS) {
 function renderBothGrids() {
   buildGrid(document.getElementById('groundGrid'), 'ground');
   buildGrid(document.getElementById('upperGrid'), 'upper');
+  applyZoom('ground');
+  applyZoom('upper');
   updateSqftLabels();
 }
 
@@ -1677,6 +1730,117 @@ function init() {
   applyTemplate(0);
   renderOverview();
 }
+
+// ══════════════════════════════════════
+//  ZOOM / PAN ENGINE
+// ══════════════════════════════════════
+const zoomState = {
+  ground: { scale:1, panX:0, panY:0 },
+  upper:  { scale:1, panX:0, panY:0 },
+};
+const ZOOM_MIN = 0.3, ZOOM_MAX = 3, ZOOM_STEP = 0.2;
+
+function applyZoom(floor) {
+  const z = zoomState[floor];
+  const inner = document.getElementById(floor==='ground' ? 'groundZoomInner' : 'upperZoomInner');
+  const wrap  = document.getElementById(floor==='ground' ? 'groundZoomWrap'  : 'upperZoomWrap');
+  const val   = document.getElementById(floor==='ground' ? 'zoomValG' : 'zoomValU');
+  if(!inner || !wrap) return;
+
+  inner.style.transform = `translate(${z.panX}px,${z.panY}px) scale(${z.scale})`;
+
+  // Size the wrapper to fit the scaled grid or full available width (whichever is bigger)
+  const CS = getCellSize();
+  const gridW = CS * COLS;
+  const gridH = CS * ROWS;
+  const sectionW = (document.getElementById('groundFloorSection')?.clientWidth || 300) - 28;
+  wrap.style.width  = Math.max(sectionW, gridW * z.scale) + 'px';
+  wrap.style.height = (gridH * z.scale) + 'px';
+  wrap.style.overflow = 'hidden';
+
+  if(val) val.textContent = Math.round(z.scale * 100) + '%';
+}
+
+function clampZoom(floor) {
+  const z = zoomState[floor];
+  z.scale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z.scale));
+}
+
+// Zoom buttons
+['ground','upper'].forEach(floor => {
+  const inBtn  = document.getElementById(floor==='ground'?'zoomInG':'zoomInU');
+  const outBtn = document.getElementById(floor==='ground'?'zoomOutG':'zoomOutU');
+  if(inBtn)  inBtn.addEventListener('click',  () => { zoomState[floor].scale += ZOOM_STEP; clampZoom(floor); applyZoom(floor); });
+  if(outBtn) outBtn.addEventListener('click', () => { zoomState[floor].scale -= ZOOM_STEP; clampZoom(floor); applyZoom(floor); });
+});
+
+// Scroll wheel zoom on desktop
+['ground','upper'].forEach(floor => {
+  const wrap = document.getElementById(floor==='ground'?'groundZoomWrap':'upperZoomWrap');
+  if(!wrap) return;
+  wrap.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+    zoomState[floor].scale += delta;
+    clampZoom(floor);
+    applyZoom(floor);
+  }, {passive:false});
+});
+
+// Pinch-to-zoom + pan on mobile
+['ground','upper'].forEach(floor => {
+  const wrap = document.getElementById(floor==='ground'?'groundZoomWrap':'upperZoomWrap');
+  if(!wrap) return;
+  let lastDist = null, lastMidX = 0, lastMidY = 0;
+  let isPanning = false, panStartX = 0, panStartY = 0, panStartPX = 0, panStartPY = 0;
+
+  wrap.addEventListener('touchstart', (e) => {
+    if(e.touches.length === 2) {
+      // Pinch start
+      lastDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      lastMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      lastMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      e.preventDefault();
+    } else if(e.touches.length === 1 && zoomState[floor].scale !== 1) {
+      // Pan start (only when zoomed)
+      isPanning = true;
+      panStartX = e.touches[0].clientX;
+      panStartY = e.touches[0].clientY;
+      panStartPX = zoomState[floor].panX;
+      panStartPY = zoomState[floor].panY;
+    }
+  }, {passive:false});
+
+  wrap.addEventListener('touchmove', (e) => {
+    if(e.touches.length === 2) {
+      e.preventDefault();
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if(lastDist) {
+        const ratio = dist / lastDist;
+        zoomState[floor].scale *= ratio;
+        clampZoom(floor);
+        applyZoom(floor);
+      }
+      lastDist = dist;
+    } else if(e.touches.length === 1 && isPanning) {
+      e.preventDefault();
+      zoomState[floor].panX = panStartPX + (e.touches[0].clientX - panStartX);
+      zoomState[floor].panY = panStartPY + (e.touches[0].clientY - panStartY);
+      applyZoom(floor);
+    }
+  }, {passive:false});
+
+  wrap.addEventListener('touchend', (e) => {
+    if(e.touches.length < 2) lastDist = null;
+    if(e.touches.length === 0) isPanning = false;
+  });
+});
 
 init();
 </script>
